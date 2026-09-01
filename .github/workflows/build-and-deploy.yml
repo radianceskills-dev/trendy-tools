@@ -1,4 +1,5 @@
 # Build all 16 browser tools from source and deploy to Netlify
+# Triggered manually or on push to main
 name: Build & Deploy
 
 on:
@@ -17,7 +18,7 @@ on:
         default: ''
 
 env:
-  NODE_VERSION: '20'
+  NODE_VERSION: '24'
 
 jobs:
   build:
@@ -33,20 +34,153 @@ jobs:
           node-version: ${{ env.NODE_VERSION }}
 
       - name: Install global tools
-        run: npm install -g pnpm yarn
+        run: |
+          npm install -g pnpm yarn
 
       - name: Setup Python
         uses: actions/setup-python@v5
         with:
           python-version: '3.12'
 
-      - name: Build tools from manifest
-        env:
-          FILTER: ${{ github.event.inputs.tool }}
+      - name: Read manifest and build tools
         run: |
           set -e
           mkdir -p tools
-          python3 build_from_manifest.py
+
+          FILTER="${{ github.event.inputs.tool }}"
+
+          python3 <<'BUILDSCRIPT'
+          import json, subprocess, os, sys
+
+          with open('tools-manifest.json') as f:
+              manifest = json.load(f)
+
+          tool_filter = os.environ.get('FILTER', '').strip()
+          tools = manifest['tools']
+          if tool_filter:
+              tools = [t for t in tools if t['id'] == tool_filter]
+              if not tools:
+                  print(f"Tool '{tool_filter}' not found in manifest")
+                  sys.exit(1)
+
+          failed = []
+          for tool in tools:
+              tid = tool['id']
+              repo = tool['repo']
+              ref = tool['ref']
+              ref_type = tool['refType']
+              output_dir = tool['outputDir']
+              build_cmd = tool.get('build', '')
+
+              print(f"\n{'='*60}")
+              print(f"Building: {tid} (ref: {ref})")
+              print(f"{'='*60}")
+
+              clone_dir = f".build-cache/{tid}"
+              dest_dir = f"tools/{tid}"
+
+              try:
+                  # Clone
+                  if ref_type == 'tag':
+                      subprocess.run(['git', 'clone', '--depth', '1', '--branch', ref, repo, clone_dir], check=True)
+                  elif ref_type == 'commit':
+                      subprocess.run(['git', 'clone', '--depth', '50', repo, clone_dir], check=True)
+                      subprocess.run(['git', 'checkout', ref], cwd=clone_dir, check=True)
+                  else:  # branch
+                      subprocess.run(['git', 'clone', '--depth', '1', '--branch', ref, repo, clone_dir], check=True)
+
+                  # Special cases
+                  if tid == 'bolo':
+                      os.makedirs(dest_dir, exist_ok=True)
+                      subprocess.run(['cp', f'{clone_dir}/index.html', f'{dest_dir}/index.html'], check=True)
+                      print(f"  {tid}: copied single HTML file")
+                      continue
+
+                  if tid == 'cyberchef':
+                      # CyberChef has pre-built assets on gh-pages
+                      os.makedirs(dest_dir, exist_ok=True)
+                      os.makedirs(f'{dest_dir}/assets', exist_ok=True)
+                      os.makedirs(f'{dest_dir}/images', exist_ok=True)
+                      base = 'https://gchq.github.io/CyberChef'
+                      for f_url, f_dest in [
+                          (f'{base}/', f'{dest_dir}/index.html'),
+                          (f'{base}/assets/main.js', f'{dest_dir}/assets/main.js'),
+                          (f'{base}/assets/main.css', f'{dest_dir}/assets/main.css'),
+                      ]:
+                          subprocess.run(['curl', '-sL', f_url, '-o', f_dest], check=True)
+                      # Get favicon and images from clone
+                      subprocess.run(f'cp -r {clone_dir}/src/web/static/images/* {dest_dir}/images/ 2>/dev/null || true', shell=True)
+                      print(f"  {tid}: downloaded pre-built from gh-pages")
+                      continue
+
+                  # Standard build
+                  pkg_json = f'{clone_dir}/package.json'
+                  if os.path.exists(pkg_json):
+                      with open(pkg_json) as pf:
+                          pkg = json.load(pf)
+
+                      # Detect package manager
+                      pm = pkg.get('packageManager', '')
+                      if 'pnpm' in pm or os.path.exists(f'{clone_dir}/pnpm-lock.yaml'):
+                          subprocess.run(['pnpm', 'install', '--no-frozen-lockfile'], cwd=clone_dir, check=True)
+                          subprocess.run(['pnpm', 'run', 'build'], cwd=clone_dir, check=True)
+                      elif os.path.exists(f'{clone_dir}/yarn.lock'):
+                          subprocess.run(['yarn', 'install', '--frozen-lockfile'], cwd=clone_dir, check=True, env={**os.environ, 'NODE_OPTIONS': '--max_old_space_size=4096'})
+                          # Find the right build command
+                          scripts = pkg.get('scripts', {})
+                          if 'build:app' in scripts:
+                              subprocess.run(['yarn', 'build:app'], cwd=clone_dir, check=True, env={**os.environ, 'NODE_OPTIONS': '--max_old_space_size=4096'})
+                          else:
+                              subprocess.run(['yarn', 'build'], cwd=clone_dir, check=True, env={**os.environ, 'NODE_OPTIONS': '--max_old_space_size=4096'})
+                      else:
+                          subprocess.run(['npm', 'ci'], cwd=clone_dir, check=True)
+                          scripts = pkg.get('scripts', {})
+                          if 'build' in scripts:
+                              subprocess.run(['npm', 'run', 'build'], cwd=clone_dir, check=True, env={**os.environ, 'NODE_OPTIONS': '--max_old_space_size=4096'})
+                          elif 'prod' in build_cmd:
+                              subprocess.run(['npx', 'grunt', 'prod'], cwd=clone_dir, check=True)
+                  elif tid == 'jupyterlite':
+                      subprocess.run(['pip', 'install', 'jupyterlite-core', 'jupyterlite-pyodide-kernel'], check=True)
+                      subprocess.run(['jupyter', 'lite', 'build', '--output-dir', f'{clone_dir}/_output'], check=True)
+                  else:
+                      print(f"  {tid}: no package.json and no special handler, skipping build")
+
+                  # Copy output
+                  src = f'{clone_dir}/{output_dir}'
+                  if os.path.isdir(src):
+                      os.makedirs(dest_dir, exist_ok=True)
+                      subprocess.run(f'cp -r {src}/. {dest_dir}/', shell=True, check=True)
+                      print(f"  {tid}: built and copied to {dest_dir}")
+                  elif os.path.isfile(src):
+                      os.makedirs(dest_dir, exist_ok=True)
+                      subprocess.run(['cp', src, f'{dest_dir}/'], check=True)
+                      print(f"  {tid}: copied output file to {dest_dir}")
+                  else:
+                      # Try common output directories
+                      for alt in ['dist', 'build', 'out', '_output', 'public']:
+                          alt_path = f'{clone_dir}/{alt}'
+                          if os.path.isdir(alt_path):
+                              os.makedirs(dest_dir, exist_ok=True)
+                              subprocess.run(f'cp -r {alt_path}/. {dest_dir}/', shell=True, check=True)
+                              print(f"  {tid}: found output in {alt}, copied to {dest_dir}")
+                              break
+                      else:
+                          print(f"  WARNING: {tid}: no output directory found")
+                          failed.append(tid)
+
+              except subprocess.CalledProcessError as e:
+                  print(f"  ERROR building {tid}: {e}")
+                  failed.append(tid)
+              except Exception as e:
+                  print(f"  ERROR building {tid}: {e}")
+                  failed.append(tid)
+
+          if failed:
+              print(f"\n{'='*60}")
+              print(f"FAILED TOOLS: {', '.join(failed)}")
+              print(f"{'='*60}")
+              # Don't fail the whole build -- deploy what we have
+          BUILDSCRIPT
 
       - name: List built tools
         run: |
