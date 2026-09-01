@@ -1,0 +1,44 @@
+# Netlify configuration for Trendy Tools
+# Static site -- no build command on Netlify side.
+# Build tools via GitHub Actions, then deploy.
+
+[build]
+  publish = "."
+  command = "echo 'Static site -- no Netlify build needed.'"
+
+# Security headers
+[[headers]]
+  for = "/*"
+  [headers.values]
+    X-Frame-Options = "SAMEORIGIN"
+    X-Content-Type-Options = "nosniff"
+    Referrer-Policy = "strict-origin-when-cross-origin"
+    Permissions-Policy = "camera=(self), microphone=(self), geolocation=(self)"
+
+# Cache static assets aggressively (version-locked, so safe)
+[[headers]]
+  for = "/tools/*"
+  [headers.values]
+    Cache-Control = "public, max-age=31536000, immutable"
+
+# Don't cache the dashboard
+[[headers]]
+  for = "/index.html"
+  [headers.values]
+    Cache-Control = "public, max-age=0, must-revalidate"
+
+# SPA routing for tools that need it
+[[redirects]]
+  from = "/tools/excalidraw/*"
+  to = "/tools/excalidraw/index.html"
+  status = 200
+
+[[redirects]]
+  from = "/tools/keeweb/*"
+  to = "/tools/keeweb/index.html"
+  status = 200
+
+[[redirects]]
+  from = "/tools/it-tools/*"
+  to = "/tools/it-tools/index.html"
+  status = 200
