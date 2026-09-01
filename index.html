@@ -1,0 +1,91 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Trendy Tools</title>
+  <meta name="description" content="A collection of privacy-first, browser-only open-source tools. No server processing, no uploads, no tracking.">
+  <style>
+    :root {
+      --bg: #0f1117;
+      --surface: #1a1d27;
+      --surface-hover: #222633;
+      --border: #2a2e3d;
+      --text: #e4e6eb;
+      --text-dim: #8b8fa3;
+      --accent: #6c8cff;
+      --accent-soft: rgba(108, 140, 255, 0.12);
+      --radius: 12px;
+      --font: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif;
+    }
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body { font-family: var(--font); background: var(--bg); color: var(--text); min-height: 100vh; line-height: 1.5; }
+    .header { border-bottom: 1px solid var(--border); padding: 1.5rem 2rem; display: flex; align-items: center; justify-content: space-between; gap: 1rem; flex-wrap: wrap; }
+    .header-brand { display: flex; align-items: center; gap: 0.75rem; }
+    .header-brand h1 { font-size: 1.25rem; font-weight: 600; letter-spacing: -0.02em; }
+    .header-brand .logo { width: 32px; height: 32px; background: var(--accent); border-radius: 8px; display: flex; align-items: center; justify-content: center; font-weight: 700; font-size: 0.9rem; color: #fff; }
+    .header-meta { color: var(--text-dim); font-size: 0.8rem; }
+    .controls { padding: 1.25rem 2rem; display: flex; gap: 0.75rem; flex-wrap: wrap; align-items: center; }
+    .search-box { flex: 1; min-width: 220px; padding: 0.6rem 1rem; background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); color: var(--text); font-size: 0.9rem; font-family: var(--font); outline: none; transition: border-color 0.2s; }
+    .search-box:focus { border-color: var(--accent); }
+    .search-box::placeholder { color: var(--text-dim); }
+    .filter-btn { padding: 0.5rem 1rem; background: var(--surface); border: 1px solid var(--border); border-radius: 999px; color: var(--text-dim); font-size: 0.8rem; font-family: var(--font); cursor: pointer; transition: all 0.2s; white-space: nowrap; }
+    .filter-btn:hover { border-color: var(--accent); color: var(--text); }
+    .filter-btn.active { background: var(--accent-soft); border-color: var(--accent); color: var(--accent); }
+    .grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(320px, 1fr)); gap: 1rem; padding: 0.5rem 2rem 3rem; }
+    .card { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); padding: 1.25rem 1.5rem; display: flex; flex-direction: column; gap: 0.75rem; transition: border-color 0.2s, transform 0.15s; cursor: pointer; text-decoration: none; color: inherit; }
+    .card:hover { border-color: var(--accent); transform: translateY(-2px); }
+    .card-top { display: flex; align-items: flex-start; justify-content: space-between; gap: 0.75rem; }
+    .card-icon { width: 40px; height: 40px; background: var(--accent-soft); border-radius: 10px; display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
+    .card-icon svg { width: 20px; height: 20px; stroke: var(--accent); fill: none; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
+    .card-badge { font-size: 0.7rem; padding: 0.2rem 0.6rem; background: var(--accent-soft); color: var(--accent); border-radius: 999px; white-space: nowrap; flex-shrink: 0; }
+    .card h2 { font-size: 1rem; font-weight: 600; letter-spacing: -0.01em; }
+    .card p { font-size: 0.85rem; color: var(--text-dim); line-height: 1.55; flex: 1; }
+    .card-footer { display: flex; align-items: center; justify-content: space-between; padding-top: 0.5rem; border-top: 1px solid var(--border); }
+    .card-version { font-size: 0.72rem; color: var(--text-dim); font-family: 'SF Mono', 'Fira Code', monospace; }
+    .card-license { font-size: 0.7rem; color: var(--text-dim); }
+    @media (max-width: 640px) { .header, .controls, .grid { padding-left: 1rem; padding-right: 1rem; } .grid { grid-template-columns: 1fr; } }
+    .empty-state { grid-column: 1 / -1; text-align: center; padding: 4rem 1rem; color: var(--text-dim); }
+  </style>
+</head>
+<body>
+  <header class="header">
+    <div class="header-brand"><div class="logo">TT</div><h1>Trendy Tools</h1></div>
+    <div class="header-meta">16 tools &middot; All browser-only &middot; Privacy-first</div>
+  </header>
+  <div class="controls">
+    <input type="text" class="search-box" id="search" placeholder="Search tools..." autocomplete="off">
+    <div id="filters"></div>
+  </div>
+  <main class="grid" id="grid"></main>
+  <script>
+    const TOOLS = [
+      {id:"bentopdf",name:"BentoPDF",category:"PDF / Documents",desc:"Merge, split, OCR, redact, sign, encrypt, compress, and convert PDFs. All processing happens in your browser.",version:"v2.8.8",license:"AGPL-3.0",path:"/tools/bentopdf/",icon:'<svg viewBox="0 0 24 24"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg>'},
+      {id:"it-tools",name:"IT-Tools",category:"Developer Utilities",desc:"JSON, JWT, regex, UUID, hashing, timestamp conversion, networking helpers, generators, and many more.",version:"v2024.10.22",license:"GPL-3.0",path:"/tools/it-tools/",icon:'<svg viewBox="0 0 24 24"><polyline points="16 18 22 12 16 6"/><polyline points="8 6 2 12 8 18"/></svg>'},
+      {id:"cyberchef",name:"CyberChef",category:"Data / Crypto / Encoding",desc:"Data transformation, encoding, encryption, compression, binary analysis, and technical investigation.",version:"v11.3.0",license:"Apache-2.0",path:"/tools/cyberchef/",icon:'<svg viewBox="0 0 24 24"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>'},
+      {id:"squoosh",name:"Squoosh",category:"Image Optimization",desc:"Image compression and format conversion with side-by-side comparison. Fully browser-side.",version:"latest",license:"Apache-2.0",path:"/tools/squoosh/",icon:'<svg viewBox="0 0 24 24"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg>'},
+      {id:"minipaint",name:"miniPaint",category:"Image Editing",desc:"Lightweight Photoshop-style editor with layers, filters, selections, transparency, and effects.",version:"v4.14.3",license:"MIT",path:"/tools/minipaint/",icon:'<svg viewBox="0 0 24 24"><path d="M12 19l7-7 3 3-7 7-3-3z"/><path d="M18 13l-1.5-7.5L2 2l3.5 14.5L13 18l5-5z"/><circle cx="11" cy="11" r="2"/></svg>'},
+      {id:"freecut",name:"FreeCut",category:"Video Editing",desc:"Browser-native non-linear editor with multi-track editing, keyframes, masks, and WebGPU processing.",version:"main",license:"MIT",path:"/tools/freecut/",icon:'<svg viewBox="0 0 24 24"><rect x="2" y="2" width="20" height="20" rx="2.18" ry="2.18"/><line x1="7" y1="2" x2="7" y2="22"/><line x1="17" y1="2" x2="17" y2="22"/><line x1="2" y1="12" x2="22" y2="12"/></svg>'},
+      {id:"omniclip",name:"Omniclip",category:"Video Editing",desc:"Open-source browser-local video editor with a simpler workflow and modern browser media APIs.",version:"main",license:"MIT",path:"/tools/omniclip/",icon:'<svg viewBox="0 0 24 24"><circle cx="6" cy="6" r="3"/><circle cx="6" cy="18" r="3"/><line x1="20" y1="4" x2="8.12" y2="15.88"/><line x1="14.47" y1="14.48" x2="20" y2="20"/></svg>'},
+      {id:"excalidraw",name:"Excalidraw",category:"Whiteboarding / Visual Diagrams",desc:"Quick diagrams, brainstorming, wireframes, and architecture sketches. Local-first and collaborative.",version:"v0.18.1",license:"MIT",path:"/tools/excalidraw/",icon:'<svg viewBox="0 0 24 24"><path d="M17 3a2.828 2.828 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5L17 3z"/></svg>'},
+      {id:"d2-playground",name:"D2 Playground",category:"Diagram-as-Code",desc:"Architecture and technical diagrams generated from plain text. Git-friendly and AI-friendly.",version:"master",license:"BSD-2-Clause",path:"/tools/d2-playground/",icon:'<svg viewBox="0 0 24 24"><line x1="6" y1="3" x2="6" y2="15"/><circle cx="18" cy="6" r="3"/><circle cx="6" cy="18" r="3"/><path d="M18 9a9 9 0 0 1-9 9"/></svg>'},
+      {id:"jupyterlite",name:"JupyterLite",category:"Coding / Python / Notebooks",desc:"Full Jupyter notebook environment running Python in the browser via WebAssembly. No server required.",version:"v0.8.2",license:"BSD-3-Clause",path:"/tools/jupyterlite/",icon:'<svg viewBox="0 0 24 24"><polyline points="4 17 10 11 4 5"/><line x1="12" y1="19" x2="20" y2="19"/></svg>'},
+      {id:"duckdb-wasm",name:"DuckDB-Wasm",category:"Data Analysis / SQL",desc:"Analyze CSV, JSON, and Parquet files locally using SQL without installing a database.",version:"v1.33.0",license:"MIT",path:"/tools/duckdb-wasm/",icon:'<svg viewBox="0 0 24 24"><ellipse cx="12" cy="5" rx="9" ry="3"/><path d="M21 12c0 1.66-4 3-9 3s-9-1.34-9-3"/><path d="M3 5v14c0 1.66 4 3 9 3s9-1.34 9-3V5"/></svg>'},
+      {id:"openqr",name:"OpenQR",category:"QR Utilities",desc:"Full-featured QR generator for URLs, Wi-Fi, contacts, locations, messaging, with styling and export.",version:"v1.0.0",license:"AGPL-3.0",path:"/tools/openqr/",icon:'<svg viewBox="0 0 24 24"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/><rect x="14" y="14" width="3" height="3"/><rect x="18" y="18" width="3" height="3"/></svg>'},
+      {id:"decimen",name:"Decimen",category:"QR File Transfer",desc:"Transfer files via animated QR codes. Works across air-gapped devices using only a screen and a camera.",version:"main",license:"MIT",path:"/tools/decimen/",icon:'<svg viewBox="0 0 24 24"><line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/></svg>'},
+      {id:"keeweb",name:"KeeWeb",category:"Password Vault",desc:"Browser-accessible KeePass/KDBX password manager with local vault support. No mandatory cloud backend.",version:"v1.18.7",license:"MIT",path:"/tools/keeweb/",icon:'<svg viewBox="0 0 24 24"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>'},
+      {id:"web-llm",name:"WebLLM",category:"Local AI",desc:"Run open LLMs directly in the browser via WebGPU. Private local inference, no server needed.",version:"v0.2.83",license:"Apache-2.0",path:"/tools/web-llm/",icon:'<svg viewBox="0 0 24 24"><rect x="4" y="4" width="16" height="16" rx="2" ry="2"/><rect x="9" y="9" width="6" height="6"/><line x1="9" y1="1" x2="9" y2="4"/><line x1="15" y1="1" x2="15" y2="4"/><line x1="9" y1="20" x2="9" y2="23"/><line x1="15" y1="20" x2="15" y2="23"/><line x1="20" y1="9" x2="23" y2="9"/><line x1="20" y1="14" x2="23" y2="14"/><line x1="1" y1="9" x2="4" y2="9"/><line x1="1" y1="14" x2="4" y2="14"/></svg>'},
+      {id:"bolo",name:"Bolo",category:"Screen Recording / Transcription",desc:"Browser-native screen, webcam, and mic recording with local Whisper transcription. Single HTML file.",version:"main",license:"MIT",path:"/tools/bolo/",icon:'<svg viewBox="0 0 24 24"><polygon points="23 7 16 12 23 17 23 7"/><rect x="1" y="5" width="15" height="14" rx="2" ry="2"/></svg>'}
+    ];
+    const categories=[...new Set(TOOLS.map(t=>t.category))];
+    const filtersEl=document.getElementById('filters');
+    const allBtn=document.createElement('button');allBtn.className='filter-btn active';allBtn.textContent='All';allBtn.dataset.cat='';filtersEl.appendChild(allBtn);
+    categories.forEach(cat=>{const btn=document.createElement('button');btn.className='filter-btn';btn.textContent=cat;btn.dataset.cat=cat;filtersEl.appendChild(btn);});
+    let activeCategory='',searchQuery='';
+    function renderCards(){const grid=document.getElementById('grid');const filtered=TOOLS.filter(t=>{const matchCat=!activeCategory||t.category===activeCategory;const matchSearch=!searchQuery||t.name.toLowerCase().includes(searchQuery)||t.desc.toLowerCase().includes(searchQuery)||t.category.toLowerCase().includes(searchQuery);return matchCat&&matchSearch;});if(filtered.length===0){grid.innerHTML='<div class="empty-state"><p>No tools match your search.</p></div>';return;}grid.innerHTML=filtered.map(t=>`<a class="card" href="${t.path}" data-id="${t.id}"><div class="card-top"><div class="card-icon">${t.icon}</div><span class="card-badge">${t.category}</span></div><h2>${t.name}</h2><p>${t.desc}</p><div class="card-footer"><span class="card-version">${t.version}</span><span class="card-license">${t.license}</span></div></a>`).join('');}
+    document.getElementById('search').addEventListener('input',e=>{searchQuery=e.target.value.toLowerCase().trim();renderCards();});
+    filtersEl.addEventListener('click',e=>{const btn=e.target.closest('.filter-btn');if(!btn)return;filtersEl.querySelectorAll('.filter-btn').forEach(b=>b.classList.remove('active'));btn.classList.add('active');activeCategory=btn.dataset.cat;renderCards();});
+    renderCards();
+  </script>
+</body>
+</html>

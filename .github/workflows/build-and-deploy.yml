@@ -1,0 +1,69 @@
+# Build all 16 browser tools from source and deploy to Netlify
+name: Build & Deploy
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'tools-manifest.json'
+      - '.github/workflows/build-and-deploy.yml'
+      - 'index.html'
+      - 'netlify.toml'
+  workflow_dispatch:
+    inputs:
+      tool:
+        description: 'Build a single tool by id (leave empty for all)'
+        required: false
+        default: ''
+
+env:
+  NODE_VERSION: '20'
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+
+      - name: Install global tools
+        run: npm install -g pnpm yarn
+
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+
+      - name: Build tools from manifest
+        env:
+          FILTER: ${{ github.event.inputs.tool }}
+        run: |
+          set -e
+          mkdir -p tools
+          python3 build_from_manifest.py
+
+      - name: List built tools
+        run: |
+          echo "Built tools:"
+          for d in tools/*/; do
+            name=$(basename "$d")
+            size=$(du -sh "$d" | cut -f1)
+            echo "  $name: $size"
+          done
+
+      - name: Deploy to Netlify
+        uses: nwtgck/actions-netlify@v3
+        with:
+          publish-dir: '.'
+          production-deploy: true
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          deploy-message: 'Deploy from GitHub Actions - ${{ github.sha }}'
+        env:
+          NETLIFY_AUTH_TOKEN: ${{ secrets.NETLIFY_AUTH_TOKEN }}
+          NETLIFY_SITE_ID: ${{ secrets.NETLIFY_SITE_ID }}
