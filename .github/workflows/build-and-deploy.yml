@@ -52,8 +52,10 @@ jobs:
           git clone --depth 1 --branch v2.8.8 https://github.com/alam00000/bentopdf.git .build-cache/bentopdf
           (
             cd .build-cache/bentopdf
-            pnpm install --no-frozen-lockfile
-            BASE_URL=/tools/bentopdf pnpm run build
+            # BentoPDF depends on install-time build hooks (including esbuild and OCR tooling).
+            # npm runs those hooks on the Linux CI runner; pnpm 10 blocks them by default.
+            npm install --legacy-peer-deps
+            BASE_URL=/tools/bentopdf npm run build
             mkdir -p ../../tools/bentopdf
             cp -r dist/. ../../tools/bentopdf/
           )
