@@ -23,7 +23,8 @@
       "refType": "tag",
       "license": "GPL-3.0",
       "build": "pnpm install && sed -i 's/vite build/vite build --base=\\/tools\\/it-tools\\//g' package.json && pnpm run build",
-      "outputDir": "dist"
+      "outputDir": "dist",
+      "implementationState": "direct-static-validation"
     },
     {
       "id": "cyberchef",
@@ -35,7 +36,8 @@
       "refType": "tag",
       "license": "Apache-2.0",
       "build": "npx grunt prod",
-      "outputDir": "build/prod"
+      "outputDir": "build/prod",
+      "implementationState": "direct-static-validation"
     },
     {
       "id": "squoosh",
@@ -59,7 +61,8 @@
       "refType": "tag",
       "license": "MIT",
       "build": "npm install && PUBLIC_URL=/tools/minipaint/ npm run build",
-      "outputDir": "dist"
+      "outputDir": "dist",
+      "implementationState": "direct-static-validation"
     },
     {
       "id": "freecut",
@@ -119,7 +122,8 @@
       "refType": "tag",
       "license": "BSD-3-Clause",
       "build": "pip install jupyterlite-core jupyterlite-pyodide-kernel && jupyter lite build --base-url /tools/jupyterlite/ --output-dir _output",
-      "outputDir": "_output"
+      "outputDir": "_output",
+      "implementationState": "direct-static-validation"
     },
     {
       "id": "duckdb-wasm",
@@ -151,11 +155,12 @@
       "category": "QR File Transfer",
       "description": "Transfer files via animated QR codes. Works across air-gapped devices -- screen to camera.",
       "repo": "https://github.com/aryanjsx/Decimen",
-      "ref": "main",
-      "refType": "branch",
+      "ref": "435272313f9d477ccb765d4d372acd0102f49363",
+      "refType": "commit",
       "license": "MIT",
       "build": "npm install && sed -i 's/vite build/vite build --base=\\/tools\\/decimen\\//g' package.json && npm run build",
-      "outputDir": "dist"
+      "outputDir": "dist",
+      "implementationState": "direct-static-validation"
     },
     {
       "id": "keeweb",
@@ -187,11 +192,12 @@
       "category": "Screen Recording / Transcription",
       "description": "Browser-native screen, webcam, and mic recorder with local Whisper transcription.",
       "repo": "https://github.com/NakliTechie/bolo",
-      "ref": "main",
-      "refType": "branch",
+      "ref": "59661860639da3eb388d5bd6813e8fdd47ad31be",
+      "refType": "commit",
       "license": "MIT",
       "build": "Single HTML file -- no build required. Copy index.html.",
-      "outputDir": "."
+      "outputDir": ".",
+      "implementationState": "direct-static-validation"
     }
   ]
 }
