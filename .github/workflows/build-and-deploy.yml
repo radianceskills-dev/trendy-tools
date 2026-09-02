@@ -1,5 +1,4 @@
 # Build all 16 browser tools from source and deploy to Netlify
-# Triggered manually or on push to main
 name: Build & Deploy
 
 on:
@@ -113,37 +112,13 @@ jobs:
                       print(f"  {tid}: downloaded pre-built from gh-pages")
                       continue
 
-                  # Standard build
-                  pkg_json = f'{clone_dir}/package.json'
-                  if os.path.exists(pkg_json):
-                      with open(pkg_json) as pf:
-                          pkg = json.load(pf)
-
-                      # Detect package manager
-                      pm = pkg.get('packageManager', '')
-                      if 'pnpm' in pm or os.path.exists(f'{clone_dir}/pnpm-lock.yaml'):
-                          subprocess.run(['pnpm', 'install', '--no-frozen-lockfile'], cwd=clone_dir, check=True)
-                          subprocess.run(['pnpm', 'run', 'build'], cwd=clone_dir, check=True)
-                      elif os.path.exists(f'{clone_dir}/yarn.lock'):
-                          subprocess.run(['yarn', 'install', '--frozen-lockfile'], cwd=clone_dir, check=True, env={**os.environ, 'NODE_OPTIONS': '--max_old_space_size=4096'})
-                          # Find the right build command
-                          scripts = pkg.get('scripts', {})
-                          if 'build:app' in scripts:
-                              subprocess.run(['yarn', 'build:app'], cwd=clone_dir, check=True, env={**os.environ, 'NODE_OPTIONS': '--max_old_space_size=4096'})
-                          else:
-                              subprocess.run(['yarn', 'build'], cwd=clone_dir, check=True, env={**os.environ, 'NODE_OPTIONS': '--max_old_space_size=4096'})
-                      else:
-                          subprocess.run(['npm', 'ci'], cwd=clone_dir, check=True)
-                          scripts = pkg.get('scripts', {})
-                          if 'build' in scripts:
-                              subprocess.run(['npm', 'run', 'build'], cwd=clone_dir, check=True, env={**os.environ, 'NODE_OPTIONS': '--max_old_space_size=4096'})
-                          elif 'prod' in build_cmd:
-                              subprocess.run(['npx', 'grunt', 'prod'], cwd=clone_dir, check=True)
-                  elif tid == 'jupyterlite':
-                      subprocess.run(['pip', 'install', 'jupyterlite-core', 'jupyterlite-pyodide-kernel'], check=True)
-                      subprocess.run(['jupyter', 'lite', 'build', '--output-dir', f'{clone_dir}/_output'], check=True)
+                  # Execute custom build command
+                  if build_cmd:
+                      env = {**os.environ, 'NODE_OPTIONS': '--max_old_space_size=4096'}
+                      print(f"  Executing: {build_cmd}")
+                      subprocess.run(build_cmd, shell=True, cwd=clone_dir, check=True, env=env)
                   else:
-                      print(f"  {tid}: no package.json and no special handler, skipping build")
+                      print(f"  {tid}: no build command found, skipping build")
 
                   # Copy output
                   src = f'{clone_dir}/{output_dir}'
