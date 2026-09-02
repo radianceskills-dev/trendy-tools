@@ -54,3 +54,10 @@
   from = "/tools/freecut/*"
   to = "/tools/freecut/index.html"
   status = 200
+
+# Omniclip uses WebCodecs/FFmpeg workers and requires cross-origin isolation.
+[[headers]]
+  for = "/tools/omniclip/*"
+  [headers.values]
+    Cross-Origin-Embedder-Policy = "require-corp"
+    Cross-Origin-Opener-Policy = "same-origin"

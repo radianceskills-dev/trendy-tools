@@ -84,11 +84,12 @@
       "category": "Video Editing",
       "description": "Open-source browser-local video editor with modern browser media APIs.",
       "repo": "https://github.com/omni-media/omniclip",
-      "ref": "main",
-      "refType": "branch",
+      "ref": "cbe581a4a788d9982ffd4a10025c678f9e8707d6",
+      "refType": "commit",
       "license": "MIT",
-      "build": "npm install && sed -i 's/vite build/vite build --base=\\/tools\\/omniclip\\//g' package.json && npm run build",
-      "outputDir": "dist"
+      "build": "npm ci && node adapt-omniclip.mjs pre && npm run build-netlify && node adapt-omniclip.mjs post",
+      "outputDir": "dist",
+      "implementationState": "static-route-validation"
     },
     {
       "id": "excalidraw",

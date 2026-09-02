@@ -100,7 +100,20 @@ jobs:
             cp -r dist/. ../../tools/freecut/
           )
 
-          # 5. CyberChef — official, pinned v11.3.0 release artifact.
+          # 5. Omniclip — immutable v1.1.3 source commit and Turtle import-map adapter.
+          git clone https://github.com/omni-media/omniclip.git .build-cache/omniclip
+          (
+            cd .build-cache/omniclip
+            git checkout cbe581a4a788d9982ffd4a10025c678f9e8707d6
+            npm ci
+            node ../../scripts/adapt-omniclip.mjs pre
+            npm run build-netlify
+            node ../../scripts/adapt-omniclip.mjs post
+            mkdir -p ../../tools/omniclip
+            cp -r x/. ../../tools/omniclip/
+          )
+
+          # 6. CyberChef — official, pinned v11.3.0 release artifact.
           mkdir -p .build-cache/cyberchef-release tools/cyberchef
           curl -fsSL https://github.com/gchq/CyberChef/releases/download/v11.3.0/CyberChef_d24ba1afce2e3a080308b5df7db033332fe94a1a.zip -o .build-cache/cyberchef.zip
           unzip -q .build-cache/cyberchef.zip -d .build-cache/cyberchef-release
@@ -150,7 +163,7 @@ jobs:
       - name: Validate deployment artifacts
         run: |
           set -euxo pipefail
-          for tool in it-tools bentopdf squoosh freecut cyberchef minipaint jupyterlite decimen bolo; do
+          for tool in it-tools bentopdf squoosh freecut omniclip cyberchef minipaint jupyterlite decimen bolo; do
             test -f "tools/$tool/index.html"
           done
           grep -q '/tools/it-tools/' tools/it-tools/index.html
@@ -158,6 +171,8 @@ jobs:
           grep -q '/tools/squoosh/' tools/squoosh/index.html
           grep -q '/tools/freecut/' tools/freecut/index.html
           test -f tools/freecut/sw.js
+          grep -q '/tools/omniclip/' tools/omniclip/importmap.json
+          test -f tools/omniclip/coi-serviceworker.js
           grep -q '/tools/decimen/' tools/decimen/index.html
           test -f tools/cyberchef/assets/main.js
           test -f tools/minipaint/dist/bundle.js
