@@ -67,21 +67,21 @@ jobs:
             git checkout e8d35e0fb66eb16eff6fe8fc773eabcbb7128de3
             # Upstream emits root-relative assets. Patch its URL helper at build time so
             # output is isolated under /tools/squoosh/ without modifying the pinned source.
-            python - <<'PY'
-from pathlib import Path
-p = Path('lib/entry-data-plugin.js')
-s = p.read_text()
-old = "return fileName.replace(/^static\//, '/');"
-new = "return fileName.replace(/^static\//, (process.env.BASE_URL || '/').replace(/\/?$/, '/'));"
-if old not in s:
-    raise SystemExit('Squoosh URL helper signature changed')
-p.write_text(s.replace(old, new, 1))
-p = Path('src/static-build/index.tsx')
-s = p.read_text()
-s = s.replace("start_url: '/?utm_medium", "start_url: '/tools/squoosh/?utm_medium", 1)
-s = s.replace("action: '/?utm_medium", "action: '/tools/squoosh/?utm_medium", 1)
-p.write_text(s)
-PY
+          python - <<'PY'
+          from pathlib import Path
+          p = Path('lib/entry-data-plugin.js')
+          s = p.read_text()
+          old = "return fileName.replace(/^static\\//, '/');"
+          new = "return fileName.replace(/^static\\//, (process.env.BASE_URL || '/').replace(/\\/?$/, '/'));"
+          if old not in s:
+              raise SystemExit('Squoosh URL helper signature changed')
+          p.write_text(s.replace(old, new, 1))
+          p = Path('src/static-build/index.tsx')
+          s = p.read_text()
+          s = s.replace("start_url: '/?utm_medium", "start_url: '/tools/squoosh/?utm_medium", 1)
+          s = s.replace("action: '/?utm_medium", "action: '/tools/squoosh/?utm_medium", 1)
+          p.write_text(s)
+          PY
             npm install
             BASE_URL=/tools/squoosh/ npm run build
             mkdir -p ../../tools/squoosh
