@@ -45,11 +45,12 @@
       "category": "Image Optimization",
       "description": "Image compression and format conversion, fully browser-side. Fast and polished.",
       "repo": "https://github.com/GoogleChromeLabs/squoosh",
-      "ref": "b518543",
+      "ref": "e8d35e0fb66eb16eff6fe8fc773eabcbb7128de3",
       "refType": "commit",
       "license": "Apache-2.0",
-      "build": "npm install && PUBLIC_URL=/tools/squoosh/ npm run build",
-      "outputDir": "build"
+      "build": "npm install && BASE_URL=/tools/squoosh/ npm run build (with static URL helper adapter)",
+      "outputDir": "build",
+      "implementationState": "direct-static-validation"
     },
     {
       "id": "minipaint",

@@ -60,7 +60,35 @@ jobs:
             cp -r dist/. ../../tools/bentopdf/
           )
 
-          # 3. CyberChef — official, pinned v11.3.0 release artifact.
+          # 3. Squoosh — immutable upstream commit with static-path adapter.
+          git clone https://github.com/GoogleChromeLabs/squoosh.git .build-cache/squoosh
+          (
+            cd .build-cache/squoosh
+            git checkout e8d35e0fb66eb16eff6fe8fc773eabcbb7128de3
+            # Upstream emits root-relative assets. Patch its URL helper at build time so
+            # output is isolated under /tools/squoosh/ without modifying the pinned source.
+            python - <<'PY'
+from pathlib import Path
+p = Path('lib/entry-data-plugin.js')
+s = p.read_text()
+old = "return fileName.replace(/^static\//, '/');"
+new = "return fileName.replace(/^static\//, (process.env.BASE_URL || '/').replace(/\/?$/, '/'));"
+if old not in s:
+    raise SystemExit('Squoosh URL helper signature changed')
+p.write_text(s.replace(old, new, 1))
+p = Path('src/static-build/index.tsx')
+s = p.read_text()
+s = s.replace("start_url: '/?utm_medium", "start_url: '/tools/squoosh/?utm_medium", 1)
+s = s.replace("action: '/?utm_medium", "action: '/tools/squoosh/?utm_medium", 1)
+p.write_text(s)
+PY
+            npm install
+            BASE_URL=/tools/squoosh/ npm run build
+            mkdir -p ../../tools/squoosh
+            cp -r build/. ../../tools/squoosh/
+          )
+
+          # 4. CyberChef — official, pinned v11.3.0 release artifact.
           mkdir -p .build-cache/cyberchef-release tools/cyberchef
           curl -fsSL https://github.com/gchq/CyberChef/releases/download/v11.3.0/CyberChef_d24ba1afce2e3a080308b5df7db033332fe94a1a.zip -o .build-cache/cyberchef.zip
           unzip -q .build-cache/cyberchef.zip -d .build-cache/cyberchef-release
@@ -110,11 +138,12 @@ jobs:
       - name: Validate deployment artifacts
         run: |
           set -euxo pipefail
-          for tool in it-tools bentopdf cyberchef minipaint jupyterlite decimen bolo; do
+          for tool in it-tools bentopdf squoosh cyberchef minipaint jupyterlite decimen bolo; do
             test -f "tools/$tool/index.html"
           done
           grep -q '/tools/it-tools/' tools/it-tools/index.html
           grep -q '/tools/bentopdf/' tools/bentopdf/index.html
+          grep -q '/tools/squoosh/' tools/squoosh/index.html
           grep -q '/tools/decimen/' tools/decimen/index.html
           test -f tools/cyberchef/assets/main.js
           test -f tools/minipaint/dist/bundle.js
