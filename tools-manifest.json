@@ -109,12 +109,13 @@
       "name": "D2 Playground",
       "category": "Diagram-as-Code",
       "description": "Architecture and technical diagrams from plain text. Git-friendly, AI-friendly.",
-      "repo": "https://github.com/terrastruct/d2-playground",
-      "ref": "master",
-      "refType": "branch",
-      "license": "BSD-2-Clause",
-      "build": "npm install && PUBLIC_URL=/tools/d2-playground/ npm run build",
-      "outputDir": "dist"
+      "repo": "https://github.com/d2lang/d2-playground",
+      "ref": "2a6cf2dd628ac05e12428c641d1863f629c3f7ef",
+      "refType": "commit",
+      "license": "MPL-2.0",
+      "build": "yarn --cwd src/js install --frozen-lockfile && esbuild 0.16.3 official static pipeline",
+      "outputDir": "dist",
+      "implementationState": "static-route-validation"
     },
     {
       "id": "jupyterlite",
