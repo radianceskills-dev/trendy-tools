@@ -10,7 +10,7 @@
       "ref": "v2.8.8",
       "refType": "tag",
       "license": "AGPL-3.0",
-      "build": "pnpm install && npx vite build --base=/tools/bentopdf/",
+      "build": "pnpm install && sed -i 's/vite build/vite build --base=\\/tools\\/bentopdf\\//g' package.json && pnpm run build",
       "outputDir": "dist"
     },
     {
@@ -22,7 +22,7 @@
       "ref": "v2024.10.22-7ca5933",
       "refType": "tag",
       "license": "GPL-3.0",
-      "build": "pnpm install && npx vue-tsc --noEmit && npx vite build --base=/tools/it-tools/",
+      "build": "pnpm install && sed -i 's/vite build/vite build --base=\\/tools\\/it-tools\\//g' package.json && pnpm run build",
       "outputDir": "dist"
     },
     {
@@ -70,7 +70,7 @@
       "ref": "main",
       "refType": "branch",
       "license": "MIT",
-      "build": "npm install && npx vite build --base=/tools/freecut/",
+      "build": "npm install && sed -i 's/vite build/vite build --base=\\/tools\\/freecut\\//g' package.json && npm run build",
       "outputDir": "dist"
     },
     {
@@ -82,7 +82,7 @@
       "ref": "main",
       "refType": "branch",
       "license": "MIT",
-      "build": "npm install && npx vite build --base=/tools/omniclip/",
+      "build": "npm install && sed -i 's/vite build/vite build --base=\\/tools\\/omniclip\\//g' package.json && npm run build",
       "outputDir": "dist"
     },
     {
@@ -154,7 +154,7 @@
       "ref": "main",
       "refType": "branch",
       "license": "MIT",
-      "build": "npm install && npx vite build --base=/tools/decimen/",
+      "build": "npm install && sed -i 's/vite build/vite build --base=\\/tools\\/decimen\\//g' package.json && npm run build",
       "outputDir": "dist"
     },
     {
@@ -178,7 +178,7 @@
       "ref": "v0.2.83",
       "refType": "tag",
       "license": "Apache-2.0",
-      "build": "npm install && npx vite build --base=/tools/web-llm/",
+      "build": "npm install && sed -i 's/vite build/vite build --base=\\/tools\\/web-llm\\//g' package.json && npm run build",
       "outputDir": "dist"
     },
     {
