@@ -49,9 +49,14 @@ jobs:
           )
 
           # 2. CyberChef — official, pinned v11.3.0 release artifact.
-          mkdir -p tools/cyberchef
+          mkdir -p .build-cache/cyberchef-release tools/cyberchef
           curl -fsSL https://github.com/gchq/CyberChef/releases/download/v11.3.0/CyberChef_d24ba1afce2e3a080308b5df7db033332fe94a1a.zip -o .build-cache/cyberchef.zip
-          unzip -q .build-cache/cyberchef.zip -d tools/cyberchef
+          unzip -q .build-cache/cyberchef.zip -d .build-cache/cyberchef-release
+          CYBER_HTML="$(find .build-cache/cyberchef-release -type f -name '*.html' | head -n 1)"
+          test -n "$CYBER_HTML"
+          CYBER_DIR="$(dirname "$CYBER_HTML")"
+          cp -r "$CYBER_DIR"/. tools/cyberchef/
+          if [ "$(basename "$CYBER_HTML")" != "index.html" ]; then cp "$CYBER_HTML" tools/cyberchef/index.html; fi
 
           # 3. miniPaint — package output plus the static HTML, styles and image tree it references.
           git clone --depth 1 --branch v4.14.3 https://github.com/viliusle/miniPaint.git .build-cache/minipaint
