@@ -10,7 +10,7 @@
       "ref": "v2.8.8",
       "refType": "tag",
       "license": "AGPL-3.0",
-      "build": "pnpm install && pnpm build",
+      "build": "pnpm install && npx vite build --base=/tools/bentopdf/",
       "outputDir": "dist"
     },
     {
@@ -22,7 +22,7 @@
       "ref": "v2024.10.22-7ca5933",
       "refType": "tag",
       "license": "GPL-3.0",
-      "build": "pnpm install && pnpm build",
+      "build": "pnpm install && npx vue-tsc --noEmit && npx vite build --base=/tools/it-tools/",
       "outputDir": "dist"
     },
     {
@@ -46,7 +46,7 @@
       "ref": "b518543",
       "refType": "commit",
       "license": "Apache-2.0",
-      "build": "npm install && npm run build",
+      "build": "npm install && PUBLIC_URL=/tools/squoosh/ npm run build",
       "outputDir": "build"
     },
     {
@@ -58,7 +58,7 @@
       "ref": "v4.14.3",
       "refType": "tag",
       "license": "MIT",
-      "build": "npm install && npm run build",
+      "build": "npm install && PUBLIC_URL=/tools/minipaint/ npm run build",
       "outputDir": "dist"
     },
     {
@@ -70,7 +70,7 @@
       "ref": "main",
       "refType": "branch",
       "license": "MIT",
-      "build": "npm install && npm run build",
+      "build": "npm install && npx vite build --base=/tools/freecut/",
       "outputDir": "dist"
     },
     {
@@ -82,7 +82,7 @@
       "ref": "main",
       "refType": "branch",
       "license": "MIT",
-      "build": "npm install && npm run build",
+      "build": "npm install && npx vite build --base=/tools/omniclip/",
       "outputDir": "dist"
     },
     {
@@ -94,7 +94,7 @@
       "ref": "v0.18.1",
       "refType": "tag",
       "license": "MIT",
-      "build": "yarn install && yarn build:app",
+      "build": "yarn install && PUBLIC_URL=/tools/excalidraw/ yarn build:app",
       "outputDir": "excalidraw-app/build"
     },
     {
@@ -106,7 +106,7 @@
       "ref": "master",
       "refType": "branch",
       "license": "BSD-2-Clause",
-      "build": "npm install && npm run build",
+      "build": "npm install && PUBLIC_URL=/tools/d2-playground/ npm run build",
       "outputDir": "dist"
     },
     {
@@ -118,7 +118,7 @@
       "ref": "v0.8.2",
       "refType": "tag",
       "license": "BSD-3-Clause",
-      "build": "pip install jupyterlite-core jupyterlite-pyodide-kernel && jupyter lite build",
+      "build": "pip install jupyterlite-core jupyterlite-pyodide-kernel && jupyter lite build --base-url /tools/jupyterlite/ --output-dir _output",
       "outputDir": "_output"
     },
     {
@@ -130,7 +130,7 @@
       "ref": "v1.33.0",
       "refType": "tag",
       "license": "MIT",
-      "build": "npm install && npm run build",
+      "build": "npm install && PUBLIC_URL=/tools/duckdb-wasm/ npm run build",
       "outputDir": "packages/duckdb-wasm-app"
     },
     {
@@ -142,7 +142,7 @@
       "ref": "v1.0.0",
       "refType": "tag",
       "license": "AGPL-3.0",
-      "build": "pnpm install && pnpm build",
+      "build": "pnpm install && sed -i 's|basePath: \"\"|basePath: \"/tools/openqr\"|g' next.config.mjs 2>/dev/null || true && pnpm build",
       "outputDir": "out"
     },
     {
@@ -154,7 +154,7 @@
       "ref": "main",
       "refType": "branch",
       "license": "MIT",
-      "build": "npm install && npm run build",
+      "build": "npm install && npx vite build --base=/tools/decimen/",
       "outputDir": "dist"
     },
     {
@@ -178,7 +178,7 @@
       "ref": "v0.2.83",
       "refType": "tag",
       "license": "Apache-2.0",
-      "build": "npm install && npm run build",
+      "build": "npm install && npx vite build --base=/tools/web-llm/",
       "outputDir": "dist"
     },
     {
