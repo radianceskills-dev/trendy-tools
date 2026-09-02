@@ -163,10 +163,28 @@ jobs:
           mkdir -p tools/bolo
           cp .build-cache/bolo/index.html tools/bolo/index.html
 
+      - name: Use Node.js 22 for pinned Excalidraw v0.18.1
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+
+      - name: Build Excalidraw v0.18.1
+        run: |
+          set -euxo pipefail
+          git clone --depth 1 --branch v0.18.1 https://github.com/excalidraw/excalidraw.git .build-cache/excalidraw
+          (
+            cd .build-cache/excalidraw
+            yarn install --frozen-lockfile
+            node ../../scripts/adapt-excalidraw.mjs
+            VITE_APP_ENABLE_TRACKING=false VITE_APP_DISABLE_SENTRY=true yarn build:app:docker
+            mkdir -p ../../tools/excalidraw
+            cp -r excalidraw-app/build/. ../../tools/excalidraw/
+          )
+
       - name: Validate deployment artifacts
         run: |
           set -euxo pipefail
-          for tool in it-tools bentopdf squoosh freecut omniclip cyberchef minipaint jupyterlite decimen bolo; do
+          for tool in it-tools bentopdf squoosh freecut omniclip cyberchef minipaint jupyterlite decimen bolo excalidraw; do
             test -f "tools/$tool/index.html"
           done
           grep -q '/tools/it-tools/' tools/it-tools/index.html
@@ -182,6 +200,8 @@ jobs:
           grep -q '/tools/decimen/' tools/decimen/index.html
           test -f tools/cyberchef/assets/main.js
           test -f tools/minipaint/dist/bundle.js
+          grep -q '/tools/excalidraw/' tools/excalidraw/index.html
+          test -f tools/excalidraw/manifest.webmanifest
 
       - name: Deploy only a complete validated batch
         uses: nwtgck/actions-netlify@v3

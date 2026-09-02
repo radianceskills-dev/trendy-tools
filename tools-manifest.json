@@ -100,8 +100,9 @@
       "ref": "v0.18.1",
       "refType": "tag",
       "license": "MIT",
-      "build": "yarn install && PUBLIC_URL=/tools/excalidraw/ yarn build:app",
-      "outputDir": "excalidraw-app/build"
+      "build": "Node 22: yarn install --frozen-lockfile && node adapt-excalidraw.mjs && yarn build:app:docker",
+      "outputDir": "excalidraw-app/build",
+      "implementationState": "static-route-validation"
     },
     {
       "id": "d2-playground",
