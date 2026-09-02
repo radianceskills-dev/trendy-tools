@@ -1,178 +1,83 @@
-# Build all 16 browser tools from source and deploy to Netlify
-name: Build & Deploy
+name: Build & Deploy Verified Tools
 
 on:
   push:
     branches: [main]
     paths:
+      - 'index.html'
       - 'tools-manifest.json'
       - '.github/workflows/build-and-deploy.yml'
-      - 'index.html'
       - 'netlify.toml'
   workflow_dispatch:
-    inputs:
-      tool:
-        description: 'Build a single tool by id (leave empty for all)'
-        required: false
-        default: ''
 
 env:
   NODE_VERSION: '24'
 
 jobs:
-  build:
+  build-and-deploy:
     runs-on: ubuntu-latest
-    timeout-minutes: 45
+    timeout-minutes: 25
+    permissions:
+      contents: read
     steps:
-      - name: Checkout
-        uses: actions/checkout@v4
-
-      - name: Setup Node.js
-        uses: actions/setup-node@v4
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
         with:
           node-version: ${{ env.NODE_VERSION }}
-
-      - name: Install global tools
-        run: |
-          npm install -g pnpm yarn
-
-      - name: Setup Python
-        uses: actions/setup-python@v5
+      - uses: actions/setup-python@v5
         with:
           python-version: '3.12'
-
-      - name: Read manifest and build tools
+      - name: Install build tools
+        run: npm install -g pnpm
+      - name: Build verified static applications
         run: |
-          set -e
-          mkdir -p tools
+          set -euxo pipefail
+          mkdir -p .build-cache tools
 
-          FILTER="${{ github.event.inputs.tool }}"
+          # IT-Tools (Vue/Vite): built with an explicit subdirectory base path.
+          git clone --depth 1 --branch v2024.10.22-7ca5933 https://github.com/CorentinTh/it-tools.git .build-cache/it-tools
+          cd .build-cache/it-tools
+          pnpm install --no-frozen-lockfile
+          sed -i 's/vite build/vite build --base=\/tools\/it-tools\//g' package.json
+          pnpm run build
+          mkdir -p ../../tools/it-tools
+          cp -r dist/. ../../tools/it-tools/
+          cd ../..
 
-          python3 <<'BUILDSCRIPT'
-          import json, subprocess, os, sys
+          # CyberChef: static upstream bundle; no server-side component.
+          mkdir -p tools/cyberchef/assets tools/cyberchef/images
+          curl -fsSL https://gchq.github.io/CyberChef/ -o tools/cyberchef/index.html
+          curl -fsSL https://gchq.github.io/CyberChef/assets/main.js -o tools/cyberchef/assets/main.js
+          curl -fsSL https://gchq.github.io/CyberChef/assets/main.css -o tools/cyberchef/assets/main.css
+          curl -fsSL https://gchq.github.io/CyberChef/assets/aecc661b69309290f600.ico -o tools/cyberchef/assets/aecc661b69309290f600.ico
+          for f in cyberchef-128x128.png cook_male-32x32.png fork_me.png; do curl -fsSL "https://gchq.github.io/CyberChef/images/$f" -o "tools/cyberchef/images/$f"; done
 
-          with open('tools-manifest.json') as f:
-              manifest = json.load(f)
+          # JupyterLite: static WebAssembly distribution under its own base URL.
+          python -m pip install --disable-pip-version-check jupyterlite-core jupyterlite-pyodide-kernel
+          mkdir -p .build-cache/jupyterlite-content
+          jupyter lite build --output-dir tools/jupyterlite --contents .build-cache/jupyterlite-content --base-url /tools/jupyterlite/
 
-          tool_filter = os.environ.get('FILTER', '').strip()
-          tools = manifest['tools']
-          if tool_filter:
-              tools = [t for t in tools if t['id'] == tool_filter]
-              if not tools:
-                  print(f"Tool '{tool_filter}' not found in manifest")
-                  sys.exit(1)
+          # Decimen (Vite): explicit subdirectory base path.
+          git clone --depth 1 https://github.com/aryanjsx/Decimen.git .build-cache/decimen
+          cd .build-cache/decimen
+          npm ci || npm install
+          sed -i 's/vite build/vite build --base=\/tools\/decimen\//g' package.json
+          npm run build
+          mkdir -p ../../tools/decimen
+          cp -r dist/. ../../tools/decimen/
+          cd ../..
 
-          failed = []
-          for tool in tools:
-              tid = tool['id']
-              repo = tool['repo']
-              ref = tool['ref']
-              ref_type = tool['refType']
-              output_dir = tool['outputDir']
-              build_cmd = tool.get('build', '')
+          # Bolo: standalone static HTML application.
+          git clone --depth 1 https://github.com/NakliTechie/bolo.git .build-cache/bolo
+          mkdir -p tools/bolo
+          cp .build-cache/bolo/index.html tools/bolo/index.html
 
-              print(f"\n{'='*60}")
-              print(f"Building: {tid} (ref: {ref})")
-              print(f"{'='*60}")
-
-              clone_dir = f".build-cache/{tid}"
-              dest_dir = f"tools/{tid}"
-
-              try:
-                  # Clone
-                  if ref_type == 'tag':
-                      subprocess.run(['git', 'clone', '--depth', '1', '--branch', ref, repo, clone_dir], check=True)
-                  elif ref_type == 'commit':
-                      subprocess.run(['git', 'clone', '--depth', '50', repo, clone_dir], check=True)
-                      subprocess.run(['git', 'checkout', ref], cwd=clone_dir, check=True)
-                  else:  # branch
-                      subprocess.run(['git', 'clone', '--depth', '1', '--branch', ref, repo, clone_dir], check=True)
-
-                  # Special cases
-                  if tid == 'bolo':
-                      os.makedirs(dest_dir, exist_ok=True)
-                      subprocess.run(['cp', f'{clone_dir}/index.html', f'{dest_dir}/index.html'], check=True)
-                      print(f"  {tid}: copied single HTML file")
-                      continue
-
-                  if tid == 'cyberchef':
-                      # CyberChef has pre-built assets on gh-pages
-                      os.makedirs(dest_dir, exist_ok=True)
-                      os.makedirs(f'{dest_dir}/assets', exist_ok=True)
-                      os.makedirs(f'{dest_dir}/images', exist_ok=True)
-                      base = 'https://gchq.github.io/CyberChef'
-                      for f_url, f_dest in [
-                          (f'{base}/', f'{dest_dir}/index.html'),
-                          (f'{base}/assets/main.js', f'{dest_dir}/assets/main.js'),
-                          (f'{base}/assets/main.css', f'{dest_dir}/assets/main.css'),
-                      ]:
-                          subprocess.run(['curl', '-sL', f_url, '-o', f_dest], check=True)
-                      # Get favicon and images from clone
-                      subprocess.run(f'cp -r {clone_dir}/src/web/static/images/* {dest_dir}/images/ 2>/dev/null || true', shell=True)
-                      print(f"  {tid}: downloaded pre-built from gh-pages")
-                      continue
-
-                  # Execute custom build command
-                  if build_cmd:
-                      env = {**os.environ, 'NODE_OPTIONS': '--max_old_space_size=4096'}
-                      print(f"  Executing: {build_cmd}")
-                      subprocess.run(build_cmd, shell=True, cwd=clone_dir, check=True, env=env)
-                  else:
-                      print(f"  {tid}: no build command found, skipping build")
-
-                  # Copy output
-                  src = f'{clone_dir}/{output_dir}'
-                  if os.path.isdir(src):
-                      os.makedirs(dest_dir, exist_ok=True)
-                      subprocess.run(f'cp -r {src}/. {dest_dir}/', shell=True, check=True)
-                      print(f"  {tid}: built and copied to {dest_dir}")
-                  elif os.path.isfile(src):
-                      os.makedirs(dest_dir, exist_ok=True)
-                      subprocess.run(['cp', src, f'{dest_dir}/'], check=True)
-                      print(f"  {tid}: copied output file to {dest_dir}")
-                  else:
-                      # Try common output directories
-                      for alt in ['dist', 'build', 'out', '_output', 'public']:
-                          alt_path = f'{clone_dir}/{alt}'
-                          if os.path.isdir(alt_path):
-                              os.makedirs(dest_dir, exist_ok=True)
-                              subprocess.run(f'cp -r {alt_path}/. {dest_dir}/', shell=True, check=True)
-                              print(f"  {tid}: found output in {alt}, copied to {dest_dir}")
-                              break
-                      else:
-                          print(f"  WARNING: {tid}: no output directory found")
-                          failed.append(tid)
-
-              except subprocess.CalledProcessError as e:
-                  print(f"  ERROR building {tid}: {e}")
-                  failed.append(tid)
-              except Exception as e:
-                  print(f"  ERROR building {tid}: {e}")
-                  failed.append(tid)
-
-          if failed:
-              print(f"\n{'='*60}")
-              print(f"FAILED TOOLS: {', '.join(failed)}")
-              print(f"{'='*60}")
-              # Don't fail the whole build -- deploy what we have
-          BUILDSCRIPT
-
-      - name: List built tools
-        run: |
-          echo "Built tools:"
-          for d in tools/*/; do
-            name=$(basename "$d")
-            size=$(du -sh "$d" | cut -f1)
-            echo "  $name: $size"
-          done
-
-      - name: Deploy to Netlify
+      - name: Deploy
         uses: nwtgck/actions-netlify@v3
         with:
           publish-dir: '.'
           production-deploy: true
-          github-token: ${{ secrets.GITHUB_TOKEN }}
-          deploy-message: 'Deploy from GitHub Actions - ${{ github.sha }}'
+          deploy-message: 'Verified tools deployment: ${{ github.sha }}'
         env:
           NETLIFY_AUTH_TOKEN: ${{ secrets.NETLIFY_AUTH_TOKEN }}
           NETLIFY_SITE_ID: ${{ secrets.NETLIFY_SITE_ID }}
