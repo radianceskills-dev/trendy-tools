@@ -105,6 +105,9 @@ jobs:
           (
             cd .build-cache/omniclip
             git checkout cbe581a4a788d9982ffd4a10025c678f9e8707d6
+            # The upstream v1.1.3 lock omits cross-platform optional package metadata.
+            # Repair only the temporary checkout's lock graph, then install from that lock.
+            npm install --package-lock-only --ignore-scripts
             npm ci
             node ../../scripts/adapt-omniclip.mjs pre
             npm run build-netlify
