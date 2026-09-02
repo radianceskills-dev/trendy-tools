@@ -151,8 +151,9 @@
       "ref": "v1.0.0",
       "refType": "tag",
       "license": "AGPL-3.0",
-      "build": "pnpm install && sed -i 's|basePath: \"\"|basePath: \"/tools/openqr\"|g' next.config.mjs 2>/dev/null || true && pnpm build",
-      "outputDir": "out"
+      "build": "pnpm 10.16.1 install --frozen-lockfile && Next.js static export with /tools/openqr basePath",
+      "outputDir": "out",
+      "implementationState": "static-route-validation"
     },
     {
       "id": "decimen",
@@ -173,11 +174,13 @@
       "category": "Password Vault",
       "description": "Browser-accessible KeePass/KDBX password manager with local vault support.",
       "repo": "https://github.com/keeweb/keeweb",
-      "ref": "v1.18.7",
+      "ref": "v1.18.9",
       "refType": "tag",
       "license": "MIT",
-      "build": "npm install && grunt",
-      "outputDir": "dist"
+      "build": "Install official KeeWeb-1.18.9.html.zip web artifact",
+      "outputDir": ".",
+      "implementationState": "official-web-release-validation",
+      "note": "Official May 8, 2026 pre-release web artifact; selected instead of the July 18, 2021 v1.18.7 stable artifact."
     },
     {
       "id": "web-llm",

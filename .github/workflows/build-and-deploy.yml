@@ -16,7 +16,7 @@ env:
 jobs:
   build-and-deploy:
     runs-on: ubuntu-latest
-    timeout-minutes: 30
+    timeout-minutes: 45
     permissions:
       contents: read
     steps:
@@ -207,10 +207,33 @@ jobs:
             cp -r excalidraw-app/build/. ../../tools/excalidraw/
           )
 
+      - name: Build OpenQR v1.0.0 and install KeeWeb v1.18.9 web release
+        run: |
+          set -euxo pipefail
+
+          # OpenQR — static Next.js export with a compile-time base path.
+          npm install -g pnpm@10.16.1
+          git clone --depth 1 --branch v1.0.0 https://github.com/open-qr/openqr.git .build-cache/openqr
+          (
+            cd .build-cache/openqr
+            cp ../../scripts/openqr.next.config.mjs next.config.mjs
+            pnpm install --frozen-lockfile
+            pnpm build
+            test -d out
+            mkdir -p ../../tools/openqr
+            cp -r out/. ../../tools/openqr/
+          )
+
+          # KeeWeb — official self-hostable web release. No source build or desktop binaries.
+          mkdir -p .build-cache/keeweb-release tools/keeweb
+          curl -fsSL https://github.com/keeweb/keeweb/releases/download/v1.18.9/KeeWeb-1.18.9.html.zip -o .build-cache/keeweb.zip
+          unzip -q .build-cache/keeweb.zip -d .build-cache/keeweb-release
+          cp -r .build-cache/keeweb-release/. tools/keeweb/
+
       - name: Validate deployment artifacts
         run: |
           set -euxo pipefail
-          for tool in it-tools bentopdf squoosh freecut omniclip d2-playground cyberchef minipaint jupyterlite decimen bolo excalidraw; do
+          for tool in it-tools bentopdf squoosh freecut omniclip d2-playground cyberchef minipaint jupyterlite decimen bolo excalidraw openqr keeweb; do
             test -f "tools/$tool/index.html"
           done
           grep -q '/tools/it-tools/' tools/it-tools/index.html
@@ -235,6 +258,9 @@ jobs:
           test -f tools/minipaint/dist/bundle.js
           grep -q '/tools/excalidraw/' tools/excalidraw/index.html
           test -f tools/excalidraw/manifest.webmanifest
+          grep -q '/tools/openqr/_next/' tools/openqr/index.html
+          test -f tools/keeweb/service-worker.js
+          grep -q '1.18.9' tools/keeweb/service-worker.js
 
       - name: Deploy only a complete validated batch
         uses: nwtgck/actions-netlify@v3

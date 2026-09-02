@@ -36,11 +36,6 @@
   status = 200
 
 [[redirects]]
-  from = "/tools/keeweb/*"
-  to = "/tools/keeweb/index.html"
-  status = 200
-
-[[redirects]]
   from = "/tools/it-tools/*"
   to = "/tools/it-tools/index.html"
   status = 200
