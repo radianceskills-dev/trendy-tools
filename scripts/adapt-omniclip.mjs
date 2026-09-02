@@ -1,4 +1,4 @@
-import { readFileSync, writeFileSync, readdirSync, statSync } from 'node:fs'
+import { readFileSync, writeFileSync, readdirSync, statSync, renameSync } from 'node:fs'
 import { join, extname } from 'node:path'
 
 const base = '/tools/omniclip'
@@ -29,13 +29,19 @@ if (mode === 'pre') {
   let main = readFileSync(mainFile, 'utf8')
   const telemetry = "posthog.init('phc_CMbHMWGVJSqM1RqGyGxWCyqgaSGbGFKl964fIN3NDwU',"
   if (!main.includes(telemetry)) throw new Error('Omniclip telemetry signature changed')
-  main = main.replace(telemetry, `false && ${telemetry}`)
+  main = main.replace("import posthog from 'posthog-js'\n", '').replace(telemetry, `false && ${telemetry}`)
   writeFileSync(mainFile, main)
 } else if (mode === 'post') {
   walk('x', rewriteText)
   const importMapFile = 'x/importmap.json'
   const importMap = JSON.parse(readFileSync(importMapFile, 'utf8'))
+  // Netlify excludes directories named node_modules from file uploads even when
+  // they are static runtime files. Rename the vendored browser modules first.
+  renameSync('x/node_modules', 'x/vendor')
   const rewrite = (value) => {
+    if (typeof value === 'string' && value.startsWith('/node_modules/')) {
+      return `${base}/vendor/${value.slice('/node_modules/'.length)}`
+    }
     if (typeof value === 'string' && value.startsWith('/')) return `${base}${value}`
     if (Array.isArray(value)) return value.map(rewrite)
     if (value && typeof value === 'object') {
