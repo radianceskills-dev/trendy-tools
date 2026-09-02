@@ -174,8 +174,10 @@ jobs:
           grep -q '/tools/squoosh/' tools/squoosh/index.html
           grep -q '/tools/freecut/' tools/freecut/index.html
           test -f tools/freecut/sw.js
-          grep -q '/tools/omniclip/vendor/' tools/omniclip/importmap.json
+          grep -q '"/tools/omniclip/vendor/sparrow-rtc/"' tools/omniclip/importmap.json
+          grep -q '/tools/omniclip/vendor/sparrow-rtc/vendor/@benev/slate/' tools/omniclip/importmap.json
           test -f tools/omniclip/vendor/@benev/slate/x/index.js
+          test -f tools/omniclip/vendor/sparrow-rtc/vendor/@benev/slate/x/tools/data/hex.js
           test -f tools/omniclip/coi-serviceworker.js
           grep -q '/tools/decimen/' tools/decimen/index.html
           test -f tools/cyberchef/assets/main.js

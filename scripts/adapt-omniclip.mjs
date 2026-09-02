@@ -35,17 +35,30 @@ if (mode === 'pre') {
   walk('x', rewriteText)
   const importMapFile = 'x/importmap.json'
   const importMap = JSON.parse(readFileSync(importMapFile, 'utf8'))
-  // Netlify excludes directories named node_modules from file uploads even when
-  // they are static runtime files. Rename the vendored browser modules first.
-  renameSync('x/node_modules', 'x/vendor')
-  const rewrite = (value) => {
-    if (typeof value === 'string' && value.startsWith('/node_modules/')) {
-      return `${base}/vendor/${value.slice('/node_modules/'.length)}`
+  // Netlify recursively excludes every directory named node_modules. Rename all
+  // dependency directories bottom-up, including nested packages required by import-map scopes.
+  function renameDependencyDirs(dir) {
+    for (const name of readdirSync(dir)) {
+      const file = join(dir, name)
+      if (!statSync(file).isDirectory()) continue
+      renameDependencyDirs(file)
+      if (name === 'node_modules') renameSync(file, join(dir, 'vendor'))
     }
-    if (typeof value === 'string' && value.startsWith('/')) return `${base}${value}`
+  }
+  renameDependencyDirs('x')
+
+  const rewritePath = (value) => {
+    if (typeof value !== 'string' || !value.startsWith('/')) return value
+    const vendored = value.replaceAll('/node_modules/', '/vendor/')
+    return `${base}${vendored}`
+  }
+  const rewrite = (value) => {
+    if (typeof value === 'string') return rewritePath(value)
     if (Array.isArray(value)) return value.map(rewrite)
     if (value && typeof value === 'object') {
-      for (const key of Object.keys(value)) value[key] = rewrite(value[key])
+      const entries = Object.entries(value).map(([key, child]) => [rewritePath(key), rewrite(child)])
+      for (const key of Object.keys(value)) delete value[key]
+      for (const [key, child] of entries) value[key] = child
     }
     return value
   }
