@@ -42,3 +42,15 @@
   from = "/tools/it-tools/*"
   to = "/tools/it-tools/index.html"
   status = 200
+
+# FreeCut requires cross-origin isolation for WebAssembly threads and browser media features.
+[[headers]]
+  for = "/tools/freecut/*"
+  [headers.values]
+    Cross-Origin-Embedder-Policy = "require-corp"
+    Cross-Origin-Opener-Policy = "same-origin"
+
+[[redirects]]
+  from = "/tools/freecut/*"
+  to = "/tools/freecut/index.html"
+  status = 200

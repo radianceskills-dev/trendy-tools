@@ -88,7 +88,19 @@ jobs:
             cp -r build/. ../../tools/squoosh/
           )
 
-          # 4. CyberChef — official, pinned v11.3.0 release artifact.
+          # 4. FreeCut — immutable source commit with dedicated subpath/PWA adapter.
+          git clone https://github.com/walterlow/freecut.git .build-cache/freecut
+          (
+            cd .build-cache/freecut
+            git checkout 4d62e8082c5eb387a96275bcbd323d28f6e41a62
+            npm ci || npm install
+            node ../../scripts/adapt-freecut.mjs
+            npm run build
+            mkdir -p ../../tools/freecut
+            cp -r dist/. ../../tools/freecut/
+          )
+
+          # 5. CyberChef — official, pinned v11.3.0 release artifact.
           mkdir -p .build-cache/cyberchef-release tools/cyberchef
           curl -fsSL https://github.com/gchq/CyberChef/releases/download/v11.3.0/CyberChef_d24ba1afce2e3a080308b5df7db033332fe94a1a.zip -o .build-cache/cyberchef.zip
           unzip -q .build-cache/cyberchef.zip -d .build-cache/cyberchef-release
@@ -138,12 +150,14 @@ jobs:
       - name: Validate deployment artifacts
         run: |
           set -euxo pipefail
-          for tool in it-tools bentopdf squoosh cyberchef minipaint jupyterlite decimen bolo; do
+          for tool in it-tools bentopdf squoosh freecut cyberchef minipaint jupyterlite decimen bolo; do
             test -f "tools/$tool/index.html"
           done
           grep -q '/tools/it-tools/' tools/it-tools/index.html
           grep -q '/tools/bentopdf/' tools/bentopdf/index.html
           grep -q '/tools/squoosh/' tools/squoosh/index.html
+          grep -q '/tools/freecut/' tools/freecut/index.html
+          test -f tools/freecut/sw.js
           grep -q '/tools/decimen/' tools/decimen/index.html
           test -f tools/cyberchef/assets/main.js
           test -f tools/minipaint/dist/bundle.js

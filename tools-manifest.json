@@ -71,11 +71,12 @@
       "category": "Video Editing",
       "description": "Browser-native non-linear video editor with multi-track editing, keyframes, masks, and audio tools.",
       "repo": "https://github.com/walterlow/freecut",
-      "ref": "main",
-      "refType": "branch",
+      "ref": "4d62e8082c5eb387a96275bcbd323d28f6e41a62",
+      "refType": "commit",
       "license": "MIT",
-      "build": "npm install && sed -i 's/vite build/vite build --base=\\/tools\\/freecut\\//g' package.json && npm run build",
-      "outputDir": "dist"
+      "build": "npm ci && node scripts/adapt-freecut.mjs && npm run build",
+      "outputDir": "dist",
+      "implementationState": "static-route-validation"
     },
     {
       "id": "omniclip",
