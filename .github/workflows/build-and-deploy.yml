@@ -48,7 +48,17 @@ jobs:
             cp -r dist/. ../../tools/it-tools/
           )
 
-          # 2. CyberChef — official, pinned v11.3.0 release artifact.
+          # 2. BentoPDF — pinned v2.8.8 build with its native BASE_URL support.
+          git clone --depth 1 --branch v2.8.8 https://github.com/alam00000/bentopdf.git .build-cache/bentopdf
+          (
+            cd .build-cache/bentopdf
+            pnpm install --no-frozen-lockfile
+            BASE_URL=/tools/bentopdf pnpm run build
+            mkdir -p ../../tools/bentopdf
+            cp -r dist/. ../../tools/bentopdf/
+          )
+
+          # 3. CyberChef — official, pinned v11.3.0 release artifact.
           mkdir -p .build-cache/cyberchef-release tools/cyberchef
           curl -fsSL https://github.com/gchq/CyberChef/releases/download/v11.3.0/CyberChef_d24ba1afce2e3a080308b5df7db033332fe94a1a.zip -o .build-cache/cyberchef.zip
           unzip -q .build-cache/cyberchef.zip -d .build-cache/cyberchef-release
@@ -98,10 +108,11 @@ jobs:
       - name: Validate deployment artifacts
         run: |
           set -euxo pipefail
-          for tool in it-tools cyberchef minipaint jupyterlite decimen bolo; do
+          for tool in it-tools bentopdf cyberchef minipaint jupyterlite decimen bolo; do
             test -f "tools/$tool/index.html"
           done
           grep -q '/tools/it-tools/' tools/it-tools/index.html
+          grep -q '/tools/bentopdf/' tools/bentopdf/index.html
           grep -q '/tools/decimen/' tools/decimen/index.html
           test -f tools/cyberchef/assets/main.js
           test -f tools/minipaint/dist/bundle.js
