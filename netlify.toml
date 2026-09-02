@@ -15,11 +15,13 @@
     Referrer-Policy = "strict-origin-when-cross-origin"
     Permissions-Policy = "camera=(self), microphone=(self), geolocation=(self)"
 
-# Cache static assets aggressively (version-locked, so safe)
+# Tool routes are revalidated during active integration work. Do not mark
+# un-hashed URLs immutable: a previously missing WASM/JS request could otherwise
+# cache an HTML fallback for one year and survive a corrected deployment.
 [[headers]]
   for = "/tools/*"
   [headers.values]
-    Cache-Control = "public, max-age=31536000, immutable"
+    Cache-Control = "public, max-age=0, must-revalidate"
 
 # Don't cache the dashboard
 [[headers]]

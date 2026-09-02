@@ -125,7 +125,7 @@ jobs:
             yarn --cwd src/js install --frozen-lockfile
             # Monaco resolves this URL against the document path. Upstream's ../ path
             # escapes /tools/d2-playground/, so make it tool-root-relative before bundling.
-            sed -i 's|fetch("../js/vendor/onig.wasm")|fetch("./js/vendor/onig.wasm")|' src/js/monaco/index.ts
+            sed -i 's|fetch("../js/vendor/onig.wasm")|fetch("./js/vendor/onig.wasm?v=2a6cf2d")|' src/js/monaco/index.ts
             # Avoid the browser's implicit request for the site-root favicon.
             sed -i 's|<title>D2 Playground</title>|<title>D2 Playground</title>\n    <link rel="icon" href="favicon.ico" />|' src/index.html
             mkdir -p ../../tools/d2-playground/build ../../tools/d2-playground/js
@@ -226,7 +226,7 @@ jobs:
           test -f tools/d2-playground/build/out.js
           test -f tools/d2-playground/build/style.css
           test -f tools/d2-playground/build/out.css
-          grep -q './js/vendor/onig.wasm' tools/d2-playground/build/out.js
+          grep -q './js/vendor/onig.wasm?v=2a6cf2d' tools/d2-playground/build/out.js
           ! grep -q '../js/vendor/onig.wasm' tools/d2-playground/build/out.js
           test -f tools/d2-playground/js/vendor/onig.wasm
           ! grep -q 'data-domain="play.d2lang.com"' tools/d2-playground/index.html
