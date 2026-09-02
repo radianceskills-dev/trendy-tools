@@ -217,6 +217,7 @@ jobs:
           (
             cd .build-cache/openqr
             cp ../../scripts/openqr.next.config.mjs next.config.mjs
+            node ../../scripts/adapt-openqr.mjs .
             pnpm install --frozen-lockfile
             pnpm build
             test -d out
@@ -259,6 +260,17 @@ jobs:
           grep -q '/tools/excalidraw/' tools/excalidraw/index.html
           test -f tools/excalidraw/manifest.webmanifest
           grep -q '/tools/openqr/_next/' tools/openqr/index.html
+          for asset in openqr-logo-stacked.svg openqr-logo-stacked-dark.svg favicon.svg favicon.ico apple-touch-icon.png; do
+            test -f "tools/openqr/$asset"
+          done
+          grep -q '/tools/openqr/openqr-logo-stacked.svg' tools/openqr/index.html
+          grep -q '/tools/openqr/openqr-logo-stacked-dark.svg' tools/openqr/index.html
+          grep -q '/tools/openqr/favicon.svg' tools/openqr/index.html
+          grep -q '/tools/openqr/favicon.ico' tools/openqr/index.html
+          grep -q '/tools/openqr/apple-touch-icon.png' tools/openqr/index.html
+          ! grep -q 'src="/openqr-logo-stacked' tools/openqr/index.html
+          ! grep -q 'href="/favicon' tools/openqr/index.html
+          ! grep -q 'href="/apple-touch-icon' tools/openqr/index.html
           test -f tools/keeweb/service-worker.js
           grep -q '1.18.9' tools/keeweb/service-worker.js
 
