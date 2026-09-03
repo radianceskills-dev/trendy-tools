@@ -3,12 +3,13 @@ name: Build & Deploy Verified Tools
 on:
   push:
     branches: [main]
-  workflow_dispatch:
     paths:
       - 'index.html'
       - 'tools-manifest.json'
       - '.github/workflows/build-and-deploy.yml'
       - 'netlify.toml'
+      - 'integrations/**'
+      - 'scripts/**'
   workflow_dispatch:
 
 env:
