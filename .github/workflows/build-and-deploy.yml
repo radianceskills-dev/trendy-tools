@@ -128,6 +128,7 @@ jobs:
             sed -i 's|fetch("../js/vendor/onig.wasm")|fetch("./js/vendor/onig.wasm?v=2a6cf2d")|' src/js/monaco/index.ts
             # Avoid the browser's implicit request for the site-root favicon.
             sed -i 's|<title>D2 Playground</title>|<title>D2 Playground</title>\n    <link rel="icon" href="favicon.ico" />|' src/index.html
+            node ../../scripts/adapt-d2-ai.mjs . ../../integrations/d2-ai
             mkdir -p ../../tools/d2-playground/build ../../tools/d2-playground/js
             npx --yes esbuild@0.16.3 src/js/main.js --bundle --minify --define:ENV=\"PRODUCTION\" --loader:.js=jsx --loader:.ttf=base64 --outfile=../../tools/d2-playground/build/out.js
             npx --yes esbuild@0.16.3 src/css/main.css --bundle --minify --loader:.svg=base64 --loader:.ttf=base64 --outfile=../../tools/d2-playground/build/style.css
@@ -253,6 +254,12 @@ jobs:
           grep -q './js/vendor/onig.wasm?v=2a6cf2d' tools/d2-playground/build/out.js
           ! grep -q '../js/vendor/onig.wasm' tools/d2-playground/build/out.js
           test -f tools/d2-playground/js/vendor/onig.wasm
+          grep -q 'id="ai-create-panel"' tools/d2-playground/index.html
+          grep -q 'trendytools.ai.v1' tools/d2-playground/build/out.js
+          grep -q 'openrouter.ai/api/v1/chat/completions' tools/d2-playground/build/out.js
+          grep -q 'api.b.ai/v1/chat/completions' tools/d2-playground/build/out.js
+          grep -q 'opencode.ai/zen/v1/chat/completions' tools/d2-playground/build/out.js
+          grep -q '#ai-create-panel' tools/d2-playground/build/style.css
           ! grep -q 'data-domain="play.d2lang.com"' tools/d2-playground/index.html
           grep -q '/tools/decimen/' tools/decimen/index.html
           test -f tools/cyberchef/assets/main.js

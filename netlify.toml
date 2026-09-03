@@ -58,3 +58,9 @@
   [headers.values]
     Cross-Origin-Embedder-Policy = "require-corp"
     Cross-Origin-Opener-Policy = "same-origin"
+
+# D2 AI can call only the three preconfigured API providers.
+[[headers]]
+  for = "/tools/d2-playground/*"
+  [headers.values]
+    Content-Security-Policy = "connect-src 'self' https://openrouter.ai https://api.b.ai https://opencode.ai"

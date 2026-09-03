@@ -1,0 +1,34 @@
+import { copyFile, readFile, writeFile } from "node:fs/promises";
+import { resolve } from "node:path";
+const sourceRoot = resolve(process.argv[2] ?? ".");
+const integrationRoot = resolve(process.argv[3] ?? "integrations/d2-ai");
+function replaceOnce(source, from, to, file) {
+  const count = source.split(from).length - 1;
+  if (count !== 1) throw new Error(`${file}: expected exactly one integration anchor, found ${count}`);
+  return source.replace(from, to);
+}
+const panel = (await readFile(resolve(integrationRoot, "panel.html"), "utf8")).trim();
+await copyFile(resolve(integrationRoot, "trendy_ai.js"), resolve(sourceRoot, "src/js/modules/trendy_ai.js"));
+await copyFile(resolve(integrationRoot, "trendy_ai.css"), resolve(sourceRoot, "src/css/trendy_ai.css"));
+const indexPath = resolve(sourceRoot, "src/index.html");
+let index = await readFile(indexPath, "utf8");
+const editorAnchor = '            <div id="editor-main" class="workstation-main">';
+index = replaceOnce(index, editorAnchor, `${panel}\n            ${editorAnchor.trimStart()}`, "src/index.html");
+await writeFile(indexPath, index);
+const mainPath = resolve(sourceRoot, "src/js/main.js");
+let main = await readFile(mainPath, "utf8");
+const importAnchor = 'import Sketch from "./modules/sketch.js";';
+main = replaceOnce(main, importAnchor, `${importAnchor}\nimport TrendyAI from "./modules/trendy_ai.js";`, "src/js/main.js");
+const initAnchor = "  await Editor.init();";
+main = replaceOnce(main, initAnchor, `${initAnchor}\n\n  TrendyAI.init(Editor);`, "src/js/main.js");
+await writeFile(mainPath, main);
+const editorPath = resolve(sourceRoot, "src/js/modules/editor.js");
+let editor = await readFile(editorPath, "utf8");
+editor = replaceOnce(editor, "  getEditor,\n  compile,", "  getEditor,\n  setScript,\n  compile,", "src/js/modules/editor.js");
+await writeFile(editorPath, editor);
+const cssPath = resolve(sourceRoot, "src/css/main.css");
+let css = await readFile(cssPath, "utf8");
+const cssAnchor = '@import "./workstation.css";';
+css = replaceOnce(css, cssAnchor, `${cssAnchor}\n@import "./trendy_ai.css";`, "src/css/main.css");
+await writeFile(cssPath, css);
+console.log("Added Trendy Tools create-with-AI integration to D2 Playground");
