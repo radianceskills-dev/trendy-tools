@@ -84,7 +84,8 @@ GENERATION RULES
 7. Use sequence_diagram only for chronological interactions, sql_table only for database tables, and class only for UML classes.
 8. Prefer simple identifiers using lowercase letters, numbers, and underscores. Put readable wording in labels.
 9. Do not include external URLs, remote icons, images, links, imports, or executable content.
-10. Prefer a clear, compact diagram under 300 lines.`;
+10. Prefer a clear, compact diagram under 300 lines.
+11. Before responding, check that every identifier reference exists, every class is defined, and all braces are balanced.`;
 
 let controller;
 
