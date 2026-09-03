@@ -3,6 +3,7 @@ name: Build & Deploy Verified Tools
 on:
   push:
     branches: [main]
+  workflow_dispatch:
     paths:
       - 'index.html'
       - 'tools-manifest.json'
