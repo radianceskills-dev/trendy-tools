@@ -5,27 +5,86 @@ const PROVIDERS = {
   opencode: { label: "OpenCode Zen", endpoint: "https://opencode.ai/zen/v1/chat/completions" },
 };
 
-const SYSTEM_PROMPT = `You create new diagrams using valid D2 source code.
+const SYSTEM_PROMPT = `You create complete new diagrams using valid D2 source code. Return only D2 source: no Markdown fences, JSON, explanations, or introductory text.
 
-D2 capabilities you may use:
-- Shapes and human-readable labels
-- Directed and undirected connections
-- Nested containers for systems, teams, stages, or boundaries
-- Layout direction
-- Shape types and style properties
-- Reusable classes
-- Sequence diagrams for chronological interactions
-- SQL tables for data models
-- Class shapes for software models
+CORE D2 SYNTAX
+- Object: id: Human-readable label
+- Container: id: Human-readable label { ... }
+- Reference nested objects with dot paths: frontend.browser -> backend.api
+- Connection: A -> B: label
+- Other valid connections: A -- B, A <- B, A <-> B
+- Direction: direction: right | left | up | down
+- Quote labels or keys containing punctuation or reserved words.
+- Put each declaration on its own line. Semicolons may separate declarations on one line.
 
-Rules:
-1. Return D2 source only. Do not use Markdown fences, JSON, prose, or explanations.
-2. Create a complete new diagram from the user's request.
-3. Use simple stable identifiers and clear labels.
-4. Prefer a clean, readable structure over decorative complexity.
-5. Use containers where they clarify ownership or stages.
-6. Do not include external URLs, remote icons, images, links, imports, or executable content.
-7. Keep the diagram under 300 lines unless the request clearly requires more.`;
+VALID CONTAINER EXAMPLE
+frontend: Frontend {
+  browser: Browser
+  mobile: Mobile app
+}
+backend: Backend {
+  api: API service
+  database: Database
+}
+frontend.browser -> backend.api: HTTPS request
+backend.api -> backend.database: Query
+
+VALID REUSABLE CLASS EXAMPLE
+classes: {
+  service: {
+    shape: rectangle
+    style: {
+      fill: "#E8F0FE"
+      stroke: "#2563EB"
+      stroke-width: 2
+    }
+  }
+}
+api: API service {
+  class: service
+}
+database: Database {
+  class: service
+}
+api -> database: Query
+
+VALID SEQUENCE DIAGRAM EXAMPLE
+login: Login sequence {
+  shape: sequence_diagram
+  browser: Browser
+  auth: Authentication service
+  database: Database
+  browser -> auth: Submit credentials
+  auth -> database: Find user
+  database -> auth: User record
+  auth -> browser: Return session
+}
+
+VALID SQL TABLE EXAMPLE
+users: Users {
+  shape: sql_table
+  id: int { constraint: primary_key }
+  email: varchar { constraint: unique }
+}
+
+VALID UML CLASS EXAMPLE
+user: User {
+  shape: class
+  +name: string
+  +login(): bool
+}
+
+GENERATION RULES
+1. Translate the request into D2 syntax only; never use Mermaid, PlantUML, Graphviz, or pseudocode syntax.
+2. Do not use unsupported wrapper/directive keywords such as group, graph, flowchart, subgraph, end, classDef, @startuml, participant, package, or skinparam.
+3. Use containers instead of group/subgraph/package concepts.
+4. Define reusable styling only inside a top-level classes: { ... } block and apply it with class: class_name.
+5. Keep braces balanced. Every opened { must have one matching }.
+6. Use dot-qualified references when connecting objects inside different containers.
+7. Use sequence_diagram only for chronological interactions, sql_table only for database tables, and class only for UML classes.
+8. Prefer simple identifiers using lowercase letters, numbers, and underscores. Put readable wording in labels.
+9. Do not include external URLs, remote icons, images, links, imports, or executable content.
+10. Prefer a clear, compact diagram under 300 lines.`;
 
 let controller;
 
