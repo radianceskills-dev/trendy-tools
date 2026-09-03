@@ -268,6 +268,86 @@
     @keyframes rise { from { opacity: 0; transform: translateY(14px); } to { opacity: 1; transform: translateY(0); } }
     @keyframes card-in { from { opacity: 0; transform: translateY(14px) scale(.985); } to { opacity: 1; transform: translateY(0) scale(1); } }
 
+    .ai-trigger {
+      display: inline-flex;
+      align-items: center;
+      gap: 7px;
+      min-height: 34px;
+      padding: 6px 11px;
+      border: 1px solid rgba(120, 166, 255, .3);
+      border-radius: 999px;
+      color: #dbe7ff;
+      background: linear-gradient(135deg, rgba(79,124,255,.18), rgba(139,92,246,.14));
+      cursor: pointer;
+      font-size: 12px;
+      font-weight: 750;
+      transition: transform .18s, border-color .18s, background .18s;
+    }
+    .ai-trigger:hover { transform: translateY(-1px); border-color: rgba(120,166,255,.58); background: linear-gradient(135deg, rgba(79,124,255,.28), rgba(139,92,246,.22)); }
+    .ai-trigger svg { width: 15px; height: 15px; color: #a9c3ff; }
+    .ai-trigger.configured::after { content: ""; width: 6px; height: 6px; border-radius: 50%; background: var(--green); box-shadow: 0 0 0 3px rgba(85,223,160,.11); }
+
+    .ai-dialog {
+      width: min(520px, calc(100% - 28px));
+      max-height: min(760px, calc(100vh - 28px));
+      padding: 0;
+      overflow: auto;
+      border: 1px solid var(--line-strong);
+      border-radius: 20px;
+      color: var(--text);
+      background: #101728;
+      box-shadow: 0 30px 90px rgba(0,0,0,.58);
+    }
+    .ai-dialog::backdrop { background: rgba(3,7,18,.76); backdrop-filter: blur(8px); }
+    .ai-dialog[open] { animation: dialog-in .22s ease-out both; }
+    .ai-panel { padding: 22px; }
+    .ai-head { display: flex; align-items: flex-start; justify-content: space-between; gap: 18px; }
+    .ai-title { display: flex; gap: 12px; align-items: center; }
+    .ai-title-icon { display: grid; place-items: center; width: 40px; height: 40px; border: 1px solid rgba(120,166,255,.24); border-radius: 12px; color: #b8ccff; background: rgba(79,124,255,.12); }
+    .ai-title-icon svg { width: 20px; height: 20px; }
+    .ai-title h2 { margin: 0; font-size: 18px; letter-spacing: -.02em; }
+    .ai-title p { margin: 2px 0 0; color: var(--muted); font-size: 12px; }
+    .icon-button { display: grid; place-items: center; width: 34px; height: 34px; padding: 0; border: 1px solid var(--line); border-radius: 9px; color: var(--muted); background: rgba(255,255,255,.025); cursor: pointer; }
+    .icon-button:hover { color: white; border-color: var(--line-strong); }
+    .icon-button svg { width: 17px; height: 17px; }
+    .ai-note { display: flex; gap: 9px; margin: 20px 0; padding: 11px 12px; border: 1px solid rgba(243,189,99,.2); border-radius: 11px; color: #d7c396; background: rgba(243,189,99,.065); font-size: 12px; }
+    .ai-note svg { width: 16px; height: 16px; flex: 0 0 16px; margin-top: 1px; color: var(--amber); }
+    .ai-form { display: grid; gap: 15px; }
+    .field { display: grid; gap: 7px; }
+    .field-row { display: flex; align-items: center; justify-content: space-between; gap: 12px; }
+    .field label, .field-label { color: #c9d3e4; font-size: 12px; font-weight: 700; }
+    .field input, .field select {
+      width: 100%;
+      height: 43px;
+      padding: 0 12px;
+      border: 1px solid var(--line);
+      border-radius: 10px;
+      outline: none;
+      color: var(--text);
+      background: #0b1120;
+      transition: border-color .18s, box-shadow .18s;
+    }
+    .field input:focus, .field select:focus { border-color: rgba(120,166,255,.62); box-shadow: 0 0 0 4px rgba(79,124,255,.1); }
+    .field input[readonly] { color: #8795aa; background: #0d1321; }
+    .key-wrap { position: relative; }
+    .key-wrap input { padding-right: 48px; font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; }
+    .key-toggle { position: absolute; right: 5px; top: 5px; width: 34px; height: 33px; border: 0; border-radius: 7px; color: #8492a8; background: transparent; cursor: pointer; }
+    .key-toggle:hover { color: white; background: rgba(255,255,255,.05); }
+    .key-toggle svg { width: 17px; height: 17px; }
+    .field-hint { color: #718098; font-size: 11px; }
+    .field-hint a { color: #9db9ff; text-decoration: none; }
+    .field-hint a:hover { text-decoration: underline; }
+    .ai-actions { display: flex; align-items: center; justify-content: space-between; gap: 12px; margin-top: 5px; padding-top: 17px; border-top: 1px solid var(--line); }
+    .ai-actions-right { display: flex; gap: 8px; }
+    .btn { min-height: 38px; padding: 8px 13px; border-radius: 9px; font-size: 12px; font-weight: 750; cursor: pointer; }
+    .btn-secondary { border: 1px solid var(--line); color: #b3bfd1; background: rgba(255,255,255,.025); }
+    .btn-secondary:hover { color: white; border-color: var(--line-strong); }
+    .btn-primary { border: 1px solid rgba(121,166,255,.3); color: white; background: linear-gradient(135deg, #4f7cff, #675de0); box-shadow: 0 8px 20px rgba(79,124,255,.2); }
+    .btn-primary:hover { filter: brightness(1.08); }
+    .save-status { min-height: 18px; margin: 11px 0 0; color: var(--green); font-size: 11px; }
+    .save-status.error { color: #ff8f9b; }
+    @keyframes dialog-in { from { opacity: 0; transform: translateY(8px) scale(.985); } to { opacity: 1; transform: translateY(0) scale(1); } }
+
     @media (max-width: 980px) { .tools { grid-template-columns: repeat(3, minmax(0, 1fr)); } }
     @media (max-width: 740px) {
       .shell { width: min(100% - 28px, 1180px); }
@@ -281,6 +361,11 @@
     }
     @media (max-width: 500px) {
       .top-meta .chip:not(:first-child) { display: none; }
+      .ai-trigger span { display: none; }
+      .ai-trigger { width: 34px; padding: 0; justify-content: center; }
+      .ai-actions { align-items: stretch; flex-direction: column; }
+      .ai-actions-right { display: grid; grid-template-columns: 1fr 1fr; }
+      .btn { width: 100%; }
       h1 { font-size: 43px; }
       .tools { grid-template-columns: 1fr; }
       .tool { min-height: 205px; }
@@ -306,6 +391,10 @@
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M12 3 4.5 6v5.2c0 4.7 3.2 8.7 7.5 9.8 4.3-1.1 7.5-5.1 7.5-9.8V6L12 3Z"/><path d="m9.3 12 1.8 1.8 3.8-4"/></svg>
           Version-locked
         </span>
+        <button class="ai-trigger" id="ai-open" type="button" aria-haspopup="dialog" aria-controls="ai-dialog">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><path d="m12 3 1.5 4.5L18 9l-4.5 1.5L12 15l-1.5-4.5L6 9l4.5-1.5L12 3Z"/><path d="m19 15 .8 2.2L22 18l-2.2.8L19 21l-.8-2.2L16 18l2.2-.8L19 15Z"/></svg>
+          <span id="ai-trigger-label">AI setup</span>
+        </button>
       </div>
     </header>
   </div>
@@ -343,7 +432,198 @@
     <div class="shell footer-inner"><span>Runs in your browser</span><span>16 pinned tools</span></div>
   </footer>
 
+  <dialog class="ai-dialog" id="ai-dialog" aria-labelledby="ai-dialog-title">
+    <div class="ai-panel">
+      <div class="ai-head">
+        <div class="ai-title">
+          <span class="ai-title-icon" aria-hidden="true">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M9 4h6M9 20h6M12 4v4M12 16v4"/><rect x="4" y="8" width="16" height="8" rx="4"/><circle cx="9" cy="12" r="1" fill="currentColor" stroke="none"/><circle cx="15" cy="12" r="1" fill="currentColor" stroke="none"/></svg>
+          </span>
+          <div><h2 id="ai-dialog-title">AI setup</h2><p>Saved only in this browser.</p></div>
+        </div>
+        <button class="icon-button" id="ai-close" type="button" aria-label="Close AI setup">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="m6 6 12 12M18 6 6 18"/></svg>
+        </button>
+      </div>
+
+      <div class="ai-note">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><path d="M12 3 2.8 19h18.4L12 3Z"/><path d="M12 9v4M12 17h.01"/></svg>
+        <span>Use a dedicated, rate-limited API key or a key restricted to free models.</span>
+      </div>
+
+      <form class="ai-form" id="ai-form">
+        <div class="field">
+          <label for="ai-provider">Provider</label>
+          <select id="ai-provider" required>
+            <option value="openrouter">OpenRouter</option>
+            <option value="bai">B.AI</option>
+            <option value="opencode">OpenCode Zen</option>
+          </select>
+        </div>
+
+        <div class="field">
+          <div class="field-row"><label for="ai-key">API key</label><span class="field-hint">Stored as plain text locally</span></div>
+          <div class="key-wrap">
+            <input id="ai-key" type="password" autocomplete="off" spellcheck="false" required>
+            <button class="key-toggle" id="ai-key-toggle" type="button" aria-label="Show API key">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M2.5 12s3.5-6 9.5-6 9.5 6 9.5 6-3.5 6-9.5 6-9.5-6-9.5-6Z"/><circle cx="12" cy="12" r="2.5"/></svg>
+            </button>
+          </div>
+        </div>
+
+        <div class="field">
+          <label for="ai-model">Model ID</label>
+          <input id="ai-model" list="ai-models" required spellcheck="false">
+          <datalist id="ai-models"></datalist>
+          <span class="field-hint">A free-model default is provided; you can enter another model ID.</span>
+        </div>
+
+        <div class="field">
+          <div class="field-row"><label for="ai-endpoint">API endpoint</label><span class="field-hint"><a id="ai-docs" href="#" target="_blank" rel="noopener noreferrer">Provider docs</a></span></div>
+          <input id="ai-endpoint" type="url" readonly tabindex="-1">
+        </div>
+
+        <div class="ai-actions">
+          <button class="btn btn-secondary" id="ai-clear" type="button">Clear setup</button>
+          <div class="ai-actions-right">
+            <button class="btn btn-secondary" id="ai-cancel" type="button">Cancel</button>
+            <button class="btn btn-primary" type="submit">Save setup</button>
+          </div>
+        </div>
+        <p class="save-status" id="ai-status" role="status" aria-live="polite"></p>
+      </form>
+    </div>
+  </dialog>
+
   <script>
+    const AI_STORAGE_KEY = 'trendytools.ai.v1';
+    const aiProviders = {
+      openrouter: {
+        label: 'OpenRouter',
+        baseUrl: 'https://openrouter.ai/api/v1',
+        docs: 'https://openrouter.ai/docs/quickstart',
+        placeholder: 'sk-or-v1-…',
+        defaultModel: 'openrouter/free',
+        models: ['openrouter/free']
+      },
+      bai: {
+        label: 'B.AI',
+        baseUrl: 'https://api.b.ai/v1',
+        docs: 'https://docs.b.ai/llmservice/api/',
+        placeholder: 'Enter your B.AI key',
+        defaultModel: 'deepseek-v4-flash',
+        models: ['deepseek-v4-flash']
+      },
+      opencode: {
+        label: 'OpenCode Zen',
+        baseUrl: 'https://opencode.ai/zen/v1',
+        docs: 'https://opencode.ai/docs/zen/',
+        placeholder: 'zen_…',
+        defaultModel: 'mimo-v2.5-free',
+        models: ['mimo-v2.5-free', 'big-pickle', 'nemotron-3-super-free']
+      }
+    };
+
+    function readAISettings() {
+      try {
+        const value = JSON.parse(localStorage.getItem(AI_STORAGE_KEY));
+        return value && aiProviders[value.provider] && typeof value.apiKey === 'string' ? value : null;
+      } catch { return null; }
+    }
+
+    function setupAISettings() {
+      const dialog = document.querySelector('#ai-dialog');
+      const form = document.querySelector('#ai-form');
+      const openButton = document.querySelector('#ai-open');
+      const closeButton = document.querySelector('#ai-close');
+      const cancelButton = document.querySelector('#ai-cancel');
+      const clearButton = document.querySelector('#ai-clear');
+      const providerInput = document.querySelector('#ai-provider');
+      const keyInput = document.querySelector('#ai-key');
+      const keyToggle = document.querySelector('#ai-key-toggle');
+      const modelInput = document.querySelector('#ai-model');
+      const models = document.querySelector('#ai-models');
+      const endpoint = document.querySelector('#ai-endpoint');
+      const docs = document.querySelector('#ai-docs');
+      const status = document.querySelector('#ai-status');
+      const triggerLabel = document.querySelector('#ai-trigger-label');
+      let lastProvider = providerInput.value;
+
+      function updateTrigger() {
+        const saved = readAISettings();
+        openButton.classList.toggle('configured', Boolean(saved));
+        triggerLabel.textContent = saved ? aiProviders[saved.provider].label : 'AI setup';
+        openButton.title = saved ? `AI configured with ${aiProviders[saved.provider].label}` : 'Configure AI provider';
+      }
+
+      function applyProvider(provider, replaceModel = true) {
+        const config = aiProviders[provider];
+        endpoint.value = `${config.baseUrl}/chat/completions`;
+        docs.href = config.docs;
+        keyInput.placeholder = config.placeholder;
+        models.innerHTML = config.models.map(model => `<option value="${model}"></option>`).join('');
+        if (replaceModel) modelInput.value = config.defaultModel;
+        lastProvider = provider;
+      }
+
+      function populate() {
+        const saved = readAISettings();
+        providerInput.value = saved?.provider || 'openrouter';
+        applyProvider(providerInput.value, true);
+        keyInput.value = saved?.apiKey || '';
+        modelInput.value = saved?.model || aiProviders[providerInput.value].defaultModel;
+        keyInput.type = 'password';
+        keyToggle.setAttribute('aria-label', 'Show API key');
+        status.textContent = '';
+        status.classList.remove('error');
+      }
+
+      openButton.addEventListener('click', () => {
+        populate();
+        dialog.showModal();
+        setTimeout(() => providerInput.focus(), 0);
+      });
+      closeButton.addEventListener('click', () => dialog.close());
+      cancelButton.addEventListener('click', () => dialog.close());
+      dialog.addEventListener('click', event => {
+        if (event.target === dialog) dialog.close();
+      });
+      providerInput.addEventListener('change', () => applyProvider(providerInput.value, providerInput.value !== lastProvider));
+      keyToggle.addEventListener('click', () => {
+        const showing = keyInput.type === 'text';
+        keyInput.type = showing ? 'password' : 'text';
+        keyToggle.setAttribute('aria-label', showing ? 'Show API key' : 'Hide API key');
+      });
+      form.addEventListener('submit', event => {
+        event.preventDefault();
+        if (!form.reportValidity()) return;
+        const provider = providerInput.value;
+        const config = aiProviders[provider];
+        localStorage.setItem(AI_STORAGE_KEY, JSON.stringify({
+          version: 1,
+          provider,
+          providerLabel: config.label,
+          apiKey: keyInput.value.trim(),
+          model: modelInput.value.trim(),
+          baseUrl: config.baseUrl,
+          endpoint: `${config.baseUrl}/chat/completions`,
+          protocol: 'openai-chat-completions',
+          updatedAt: new Date().toISOString()
+        }));
+        status.textContent = 'Saved in this browser.';
+        status.classList.remove('error');
+        updateTrigger();
+      });
+      clearButton.addEventListener('click', () => {
+        if (readAISettings() && !confirm('Remove the saved AI setup from this browser?')) return;
+        localStorage.removeItem(AI_STORAGE_KEY);
+        populate();
+        status.textContent = 'AI setup cleared.';
+        updateTrigger();
+      });
+      updateTrigger();
+    }
+
     const tools = [
       { name:'BentoPDF', category:'PDF', description:'Merge, split, OCR, sign and compress PDFs.', version:'v2.8.8', ready:true, id:'bentopdf', icon:'document', hue:224 },
       { name:'IT-Tools', category:'Developer', description:'Everyday developer and data utilities.', version:'v2024.10.22', ready:true, id:'it-tools', icon:'code', hue:191 },
@@ -433,6 +713,7 @@
     });
 
     render();
+    setupAISettings();
   </script>
 </body>
 </html>
