@@ -99,8 +99,8 @@ async function configuredPage(browser, pageUrl, responseContent) {
     .waitFor({ state: "visible" });
   await page.waitForFunction(
     () =>
-      document.querySelector("#trendy-ai-workflow-button")?.dataset.initialized ===
-      "true",
+      document.querySelector("#trendy-ai-workflow-button")?.dataset
+        .initialized === "true",
   );
   return { context, page, providerRequest: () => providerRequest };
 }
@@ -115,6 +115,54 @@ async function configuredPage(browser, pageUrl, responseContent) {
   });
 
   try {
+    {
+      const context = await browser.newContext({
+        viewport: { width: 1440, height: 900 },
+      });
+      const page = await context.newPage();
+      await page.goto(`http://127.0.0.1:${port}/tools/bentopdf/`, {
+        waitUntil: "domcontentloaded",
+      });
+      await page
+        .locator("#trendy-bentopdf-workflow-first")
+        .waitFor({ state: "visible" });
+      assert.match(
+        (await page.locator("#trendy-bentopdf-workflow-first").textContent()) ||
+          "",
+        /AI-powered.*PDF Workflow Builder/s,
+      );
+      assert.equal(
+        await page
+          .locator("#trendy-bentopdf-workflow-first a")
+          .getAttribute("href"),
+        "./pdf-workflow.html",
+      );
+      await page.waitForFunction(
+        () => document.querySelectorAll(".tool-card").length > 0,
+      );
+      const firstTool = page
+        .locator(".category-group")
+        .first()
+        .locator(".tool-card")
+        .first();
+      assert.equal(
+        await firstTool.locator("h3").textContent(),
+        "PDF Workflow Builder",
+      );
+      assert.equal(await firstTool.locator("p").count(), 0);
+      assert.match((await firstTool.textContent()) || "", /AI-powered/);
+      for (const selector of [
+        "#donation-ribbon",
+        "#features-section",
+        "#security-compliance-section",
+        "#faq-accordion",
+        "#testimonials-section",
+      ]) {
+        assert.equal(await page.locator(selector).count(), 0);
+      }
+      await context.close();
+    }
+
     const validPlan = JSON.stringify({
       version: 1,
       steps: [

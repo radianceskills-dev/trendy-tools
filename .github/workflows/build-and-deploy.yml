@@ -59,6 +59,7 @@ jobs:
             npm install --legacy-peer-deps
             node ../../integrations/bentopdf-ai/workflow-plan.test.mjs
             node ../../scripts/adapt-bentopdf-ai.mjs . ../../integrations/bentopdf-ai
+            node ../../scripts/adapt-bentopdf-home.mjs . ../../integrations/bentopdf-home
             BASE_URL=/tools/bentopdf npm run build
             mkdir -p ../../tools/bentopdf
             cp -r dist/. ../../tools/bentopdf/
@@ -244,6 +245,14 @@ jobs:
           done
           grep -q '/tools/it-tools/' tools/it-tools/index.html
           grep -q '/tools/bentopdf/' tools/bentopdf/index.html
+          grep -q 'id="trendy-bentopdf-workflow-first"' tools/bentopdf/index.html
+          grep -q 'AI-powered' tools/bentopdf/index.html
+          grep -q 'All PDF tools' tools/bentopdf/index.html
+          ! grep -q 'id="donation-ribbon"' tools/bentopdf/index.html
+          ! grep -q 'id="features-section"' tools/bentopdf/index.html
+          ! grep -q 'id="security-compliance-section"' tools/bentopdf/index.html
+          ! grep -q 'id="faq-accordion"' tools/bentopdf/index.html
+          ! grep -q 'id="testimonials-section"' tools/bentopdf/index.html
           test -f tools/bentopdf/pdf-workflow.html
           grep -q 'id="trendy-ai-workflow-button"' tools/bentopdf/pdf-workflow.html
           grep -q 'id="trendy-ai-workflow-modal"' tools/bentopdf/pdf-workflow.html
