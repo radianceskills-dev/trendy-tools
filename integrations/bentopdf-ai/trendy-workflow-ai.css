@@ -1,0 +1,63 @@
+#trendy-ai-workflow-button {
+  white-space: nowrap;
+}
+
+#trendy-ai-workflow-modal {
+  background: rgb(0 0 0 / 0.58);
+  backdrop-filter: blur(5px);
+}
+
+.trendy-ai-workflow-card {
+  width: min(560px, calc(100vw - 2rem));
+  background: rgb(31 41 55 / 0.98);
+  border: 1px solid rgb(75 85 99 / 0.8);
+  border-radius: 1rem;
+  box-shadow: 0 24px 70px rgb(0 0 0 / 0.42);
+  padding: 1.25rem;
+}
+
+.trendy-ai-workflow-provider {
+  display: inline-flex;
+  align-items: center;
+  border: 1px solid rgb(75 85 99);
+  border-radius: 999px;
+  padding: 0.2rem 0.55rem;
+  color: rgb(209 213 219);
+  background: rgb(17 24 39 / 0.7);
+  font-size: 0.7rem;
+  line-height: 1rem;
+}
+
+.trendy-ai-workflow-provider[data-ready="true"] {
+  color: rgb(167 243 208);
+  border-color: rgb(16 185 129 / 0.55);
+  background: rgb(6 78 59 / 0.25);
+}
+
+#trendy-ai-workflow-prompt {
+  min-height: 8rem;
+  resize: vertical;
+}
+
+#trendy-ai-workflow-status[data-type="warning"] {
+  color: rgb(251 191 36);
+}
+
+#trendy-ai-workflow-status[data-type="error"] {
+  color: rgb(248 113 113);
+}
+
+#trendy-ai-workflow-status[data-type="success"] {
+  color: rgb(110 231 183);
+}
+
+#trendy-ai-workflow-create:disabled {
+  cursor: not-allowed;
+  opacity: 0.5;
+}
+
+@media (max-width: 767px) {
+  #trendy-ai-workflow-button .trendy-ai-button-label {
+    display: none;
+  }
+}

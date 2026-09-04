@@ -64,3 +64,9 @@
   for = "/tools/d2-playground/*"
   [headers.values]
     Content-Security-Policy = "connect-src 'self' https://openrouter.ai https://api.b.ai https://opencode.ai"
+
+# BentoPDF AI workflow creation uses the same fixed OpenAI-compatible providers.
+[[headers]]
+  for = "/tools/bentopdf/*"
+  [headers.values]
+    Content-Security-Policy = "connect-src 'self' https://openrouter.ai https://api.b.ai https://opencode.ai"

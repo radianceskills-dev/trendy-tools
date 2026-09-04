@@ -57,6 +57,8 @@ jobs:
             # BentoPDF depends on install-time build hooks (including esbuild and OCR tooling).
             # npm runs those hooks on the Linux CI runner; pnpm 10 blocks them by default.
             npm install --legacy-peer-deps
+            node ../../integrations/bentopdf-ai/workflow-plan.test.mjs
+            node ../../scripts/adapt-bentopdf-ai.mjs . ../../integrations/bentopdf-ai
             BASE_URL=/tools/bentopdf npm run build
             mkdir -p ../../tools/bentopdf
             cp -r dist/. ../../tools/bentopdf/
@@ -242,6 +244,14 @@ jobs:
           done
           grep -q '/tools/it-tools/' tools/it-tools/index.html
           grep -q '/tools/bentopdf/' tools/bentopdf/index.html
+          test -f tools/bentopdf/pdf-workflow.html
+          grep -q 'id="trendy-ai-workflow-button"' tools/bentopdf/pdf-workflow.html
+          grep -q 'id="trendy-ai-workflow-modal"' tools/bentopdf/pdf-workflow.html
+          grep -Rq 'trendytools.ai.v1' tools/bentopdf/assets
+          grep -Rq 'openrouter.ai/api/v1/chat/completions' tools/bentopdf/assets
+          grep -Rq 'api.b.ai/v1/chat/completions' tools/bentopdf/assets
+          grep -Rq 'opencode.ai/zen/v1/chat/completions' tools/bentopdf/assets
+          grep -Rq 'RotateNode may only be used' tools/bentopdf/assets
           grep -q '/tools/squoosh/' tools/squoosh/index.html
           grep -q '/tools/freecut/' tools/freecut/index.html
           test -f tools/freecut/sw.js
@@ -282,6 +292,17 @@ jobs:
           ! grep -q 'href="/apple-touch-icon' tools/openqr/index.html
           test -f tools/keeweb/service-worker.js
           grep -q '1.18.9' tools/keeweb/service-worker.js
+
+      - name: Browser-test BentoPDF AI with a mocked provider response
+        run: |
+          set -euxo pipefail
+          TEST_DIR="$PWD/.build-cache/bentopdf-browser-test"
+          mkdir -p "$TEST_DIR"
+          npm install --prefix "$TEST_DIR" --no-save playwright-core@1.55.0
+          cp integrations/bentopdf-ai/browser-test.cjs "$TEST_DIR/browser-test.cjs"
+          CHROME_BIN="$(command -v google-chrome || command -v google-chrome-stable || command -v chromium || command -v chromium-browser)"
+          test -n "$CHROME_BIN"
+          node "$TEST_DIR/browser-test.cjs" "$PWD" "$CHROME_BIN"
 
       - name: Deploy only a complete validated batch
         uses: nwtgck/actions-netlify@v3
