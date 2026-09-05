@@ -188,7 +188,8 @@ async function configuredPage(browser, pageUrl, responseContent) {
       version: 1,
       steps: [
         { type: "MergeNode", controls: { retainPageLabels: false } },
-        {\n          type: "PageNumbersNode",
+        {
+          type: "PageNumbersNode",
           controls: {
             position: "bottom-center",
             fontSize: 12,
@@ -204,7 +205,8 @@ async function configuredPage(browser, pageUrl, responseContent) {
       download: { filename: "final-report.pdf" },
     });
 
-    {\n      const { context, page, providerRequest } = await configuredPage(
+    {
+      const { context, page, providerRequest } = await configuredPage(
         browser,
         pageUrl,
         validPlan,
