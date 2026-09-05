@@ -1,4 +1,4 @@
-import { readFile, writeFile } from "node:fs/promises";
+import { copyFile, readFile, writeFile } from "node:fs/promises";
 import { resolve } from "node:path";
 
 const sourceRoot = resolve(process.argv[2] ?? ".");
@@ -78,6 +78,15 @@ tools = replaceOnce(
 );
 await writeFile(toolsPath, tools);
 
+await copyFile(
+  resolve(integrationRoot, "sw-unregister.ts"),
+  resolve(sourceRoot, "src/js/sw-register.ts"),
+);
+await copyFile(
+  resolve(integrationRoot, "sw-kill.js"),
+  resolve(sourceRoot, "public/sw.js"),
+);
+
 console.log(
-  "Simplified BentoPDF homepage and prioritized the AI workflow builder",
+  "Simplified BentoPDF homepage, prioritized AI workflow builder, and deactivated service worker caching",
 );
