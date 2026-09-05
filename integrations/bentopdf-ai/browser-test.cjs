@@ -27,17 +27,23 @@ const server = http.createServer((request, response) => {
   const pathname = decodeURIComponent(
     new URL(request.url, "http://127.0.0.1").pathname,
   );
-  const relative = pathname.replace(/^\/+/, "") || "index.html";
-  const filePath = path.resolve(root, relative);
+  let relative = pathname.replace(/^\/+/, "");
+  let filePath = path.resolve(root, relative);
+  if (fs.existsSync(filePath) && fs.statSync(filePath).isDirectory()) {
+    filePath = path.join(filePath, "index.html");
+  }
   if (
-    !filePath.startsWith(`${root}${path.sep}`) ||
+    (!filePath.startsWith(`${root}${path.sep}`) && filePath !== root) ||
     !fs.existsSync(filePath) ||
     !fs.statSync(filePath).isFile()
   ) {
     response.writeHead(404).end("Not found");
     return;
   }
-  if (pathname.startsWith("/tools/bentopdf/")) {
+  if (
+    pathname.startsWith("/tools/bentopdf/") ||
+    pathname === "/tools/bentopdf"
+  ) {
     response.setHeader(
       "Content-Security-Policy",
       "connect-src 'self' https://openrouter.ai https://api.b.ai https://opencode.ai",
@@ -93,7 +99,14 @@ async function configuredPage(browser, pageUrl, responseContent) {
     },
   );
 
-  await page.goto(pageUrl, { waitUntil: "domcontentloaded" });
+  const response = await page.goto(pageUrl, {
+    waitUntil: "domcontentloaded",
+  });
+  assert.equal(
+    response?.status(),
+    200,
+    `Expected 200 for ${pageUrl}, got ${response?.status()}`,
+  );
   await page
     .locator("#trendy-ai-workflow-button")
     .waitFor({ state: "visible" });
@@ -120,9 +133,17 @@ async function configuredPage(browser, pageUrl, responseContent) {
         viewport: { width: 1440, height: 900 },
       });
       const page = await context.newPage();
-      await page.goto(`http://127.0.0.1:${port}/tools/bentopdf/`, {
-        waitUntil: "domcontentloaded",
-      });
+      const response = await page.goto(
+        `http://127.0.0.1:${port}/tools/bentopdf/`,
+        {
+          waitUntil: "domcontentloaded",
+        },
+      );
+      assert.equal(
+        response?.status(),
+        200,
+        `Expected 200 for BentoPDF homepage, got ${response?.status()}`,
+      );
       await page
         .locator("#trendy-bentopdf-workflow-first")
         .waitFor({ state: "visible" });
@@ -167,8 +188,7 @@ async function configuredPage(browser, pageUrl, responseContent) {
       version: 1,
       steps: [
         { type: "MergeNode", controls: { retainPageLabels: false } },
-        {
-          type: "PageNumbersNode",
+        {\n          type: "PageNumbersNode",
           controls: {
             position: "bottom-center",
             fontSize: 12,
@@ -184,8 +204,7 @@ async function configuredPage(browser, pageUrl, responseContent) {
       download: { filename: "final-report.pdf" },
     });
 
-    {
-      const { context, page, providerRequest } = await configuredPage(
+    {\n      const { context, page, providerRequest } = await configuredPage(
         browser,
         pageUrl,
         validPlan,
