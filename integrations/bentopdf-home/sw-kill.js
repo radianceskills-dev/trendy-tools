@@ -1,13 +1,15 @@
-self.addEventListener("install", () => {
+const PRECACHE_ASSETS = [];
+
+self.addEventListener('install', () => {
   self.skipWaiting();
 });
 
-self.addEventListener("activate", (event) => {
+self.addEventListener('activate', (event) => {
   event.waitUntil(
     caches
       .keys()
       .then((keys) => Promise.all(keys.map((key) => caches.delete(key))))
       .then(() => self.registration.unregister())
-      .then(() => self.clients.claim()),
+      .then(() => self.clients.claim())
   );
 });
