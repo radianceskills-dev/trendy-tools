@@ -11,7 +11,7 @@ on:
 permissions:
   contents: read
 concurrency:
-  group: bentopdf-ai-${{ github.ref }}
+  group: bentopdf-ai-${{ github.head_ref || github.ref_name }}
   cancel-in-progress: true
 jobs:
   validate:
