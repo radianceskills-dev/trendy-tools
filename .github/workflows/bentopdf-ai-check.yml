@@ -1,0 +1,50 @@
+name: BentoPDF AI checks (no deploy)
+on:
+  pull_request:
+    paths:
+      - 'integrations/bentopdf-*/**'
+      - 'scripts/adapt-bentopdf-*.mjs'
+      - '.github/workflows/bentopdf-ai-check.yml'
+  push:
+    branches: ['feat/bentopdf-planner-foundation']
+  workflow_dispatch:
+permissions:
+  contents: read
+concurrency:
+  group: bentopdf-ai-${{ github.ref }}
+  cancel-in-progress: true
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+      - name: Test pure planner (no provider access)
+        run: node --test integrations/bentopdf-ai/*.test.mjs
+      - name: Fetch and verify pinned BentoPDF
+        run: |
+          set -euxo pipefail
+          git clone --depth 1 --branch v2.8.8 https://github.com/alam00000/bentopdf.git .build-cache/bentopdf
+          test "$(git -C .build-cache/bentopdf rev-parse HEAD)" = f96cd4e5166f3d51393dfe9f3c440b5bb77802f1
+          git -C .build-cache/bentopdf rev-parse HEAD
+      - name: Adapt and build BentoPDF only
+        run: |
+          set -euxo pipefail
+          cd .build-cache/bentopdf
+          npm install --legacy-peer-deps --no-audit --no-fund
+          node ../../scripts/adapt-bentopdf-ai.mjs . ../../integrations/bentopdf-ai
+          node ../../scripts/adapt-bentopdf-home.mjs . ../../integrations/bentopdf-home
+          BASE_URL=/tools/bentopdf npm run build
+          mkdir -p ../../tools/bentopdf
+          cp -r dist/. ../../tools/bentopdf/
+      - name: Mocked browser checks (never real providers)
+        run: |
+          set -euxo pipefail
+          TEST_DIR="$PWD/.build-cache/browser-check"
+          npm install --prefix "$TEST_DIR" --no-save playwright-core@1.55.0
+          cp integrations/bentopdf-ai/browser-test.cjs "$TEST_DIR/browser-test.cjs"
+          CHROME_BIN="$(command -v google-chrome || command -v chromium)"
+          node "$TEST_DIR/browser-test.cjs" "$PWD" "$CHROME_BIN"

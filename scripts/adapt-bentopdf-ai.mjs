@@ -15,6 +15,10 @@ function replaceOnce(source, from, to, file) {
 }
 
 await copyFile(
+  resolve(integrationRoot, "capability-registry.js"),
+  resolve(sourceRoot, "src/js/workflow/capability-registry.js"),
+);
+await copyFile(
   resolve(integrationRoot, "workflow-plan.js"),
   resolve(sourceRoot, "src/js/workflow/trendy-ai-plan.js"),
 );
