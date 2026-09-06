@@ -630,6 +630,141 @@ const capabilities = {
     ]
   }
 };
+const selectionHints = {
+  "merge": [
+    "Organize",
+    [
+      "merge",
+      "combine",
+      "join",
+      "concatenate"
+    ]
+  ],
+  "split": [
+    "Organize",
+    [
+      "split",
+      "extract pages",
+      "select pages",
+      "keep pages",
+      "keep page"
+    ]
+  ],
+  "rotate": [
+    "Organize",
+    [
+      "rotate",
+      "rotation",
+      "orientation",
+      "turn clockwise",
+      "turn counterclockwise"
+    ]
+  ],
+  "delete_pages": [
+    "Organize",
+    [
+      "delete pages",
+      "delete page",
+      "remove pages",
+      "remove page",
+      "drop pages",
+      "drop page"
+    ]
+  ],
+  "page_numbers": [
+    "Annotate",
+    [
+      "page numbers",
+      "page numbering",
+      "number pages",
+      "number the pages",
+      "number each page"
+    ]
+  ],
+  "watermark": [
+    "Annotate",
+    [
+      "watermark",
+      "watermarks"
+    ]
+  ],
+  "header_footer": [
+    "Annotate",
+    [
+      "header",
+      "footer",
+      "headers",
+      "footers"
+    ]
+  ],
+  "compress": [
+    "Optimize",
+    [
+      "compress",
+      "compression",
+      "reduce file size",
+      "reduce size",
+      "shrink",
+      "smaller pdf"
+    ]
+  ],
+  "ocr": [
+    "Text",
+    [
+      "ocr",
+      "searchable",
+      "recognize text",
+      "recognise text",
+      "text recognition"
+    ]
+  ],
+  "encrypt": [
+    "Security",
+    [
+      "encrypt",
+      "encryption",
+      "password protect",
+      "password protected",
+      "password protection",
+      "protect with a password"
+    ]
+  ],
+  "sanitize": [
+    "Security",
+    [
+      "sanitize",
+      "sanitise",
+      "remove links",
+      "remove scripts",
+      "strip metadata",
+      "remove metadata",
+      "remove attachments"
+    ]
+  ],
+  "flatten": [
+    "Forms",
+    [
+      "flatten",
+      "flattening",
+      "make forms noneditable"
+    ]
+  ],
+  "edit_metadata": [
+    "Metadata",
+    [
+      "metadata",
+      "set title",
+      "set author",
+      "change author",
+      "change title",
+      "set keywords"
+    ]
+  ]
+};
+for (const [id, [category, aliases]] of Object.entries(selectionHints)) {
+  capabilities[id].category = category;
+  capabilities[id].aliases = aliases;
+}
 const legacyPrompt = buildLegacySystemPrompt();
 for (const cap of Object.values(capabilities)) {
   cap.aiKeys = cap.nodeType === 'EncryptNode' ? [] : [...CONTROL_KEYS[cap.nodeType]];

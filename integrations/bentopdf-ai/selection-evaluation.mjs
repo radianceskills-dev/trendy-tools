@@ -1,0 +1,24 @@
+import assert from 'node:assert/strict';
+import { readFileSync } from 'node:fs';
+import { selectCapabilities, auditSelection } from './capability-selection.js';
+import { buildPlanV2Prompt } from './planner-v2.js';
+const fixtures=JSON.parse(readFileSync(new URL('./selection-fixtures.json',import.meta.url),'utf8'));
+const fullCharacters=buildPlanV2Prompt().length;
+const baseline=JSON.parse(readFileSync(new URL('./selection-baseline.json',import.meta.url),'utf8'));
+const rows=fixtures.map(f=>{
+  const selection=selectCapabilities(f.request);
+  const missing=f.expected.filter(id=>!selection.operationIds.includes(id));
+  const extra=selection.operationIds.filter(id=>!f.expected.includes(id));
+  const characters=buildPlanV2Prompt(selection.operationIds).length;
+  assert.equal(missing.length,0,`Coverage lost for fixture ${f.request}`);
+  if(selection.mode==='shortlist') assert.equal(extra.length,0,`Unexpected selection for ${f.request}`);
+  return {mode:selection.mode,candidates:selection.operationIds.length,characters,missing:missing.length,extra:extra.length,reduction:1-characters/fullCharacters};
+});
+const shortlist=rows.filter(r=>r.mode==='shortlist');
+const sorted=shortlist.map(r=>r.reduction).sort((a,b)=>a-b);
+const median=sorted.length%2?sorted[(sorted.length-1)/2]:(sorted[sorted.length/2-1]+sorted[sorted.length/2])/2;
+const characters=shortlist.map(r=>r.characters).sort((a,b)=>a-b);
+const medianCharacters=characters.length%2?characters[(characters.length-1)/2]:(characters[characters.length/2-1]+characters[characters.length/2])/2;
+const positive=selectCapabilities('Merge PDFs and compress.');
+assert.equal(auditSelection({steps:[{operation:'merge'}]},positive).ok,false);
+console.log(JSON.stringify({fixtures:rows.length,shortlisted:shortlist.length,fullCatalogFallbacks:rows.length-shortlist.length,expectedOperationsCovered:rows.every(r=>r.missing===0),shortlistExtraOperations:shortlist.reduce((n,r)=>n+r.extra,0),fullPromptCharacters:fullCharacters,foundationPromptCharacters:baseline.systemPromptCharacters,medianReductionAgainstFoundationPercent:Number(((1-medianCharacters/baseline.systemPromptCharacters)*100).toFixed(1)),medianShortlistCharacterReductionPercent:Number((median*100).toFixed(1)),note:'Character counts, not tokens. English lexical fixtures only; full fallback contributes to coverage. No real-model accuracy claim.'},null,2));

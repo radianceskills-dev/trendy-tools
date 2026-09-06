@@ -69,3 +69,11 @@
 #trendy-ai-workflow-review label { display: block; margin: .75rem 0; }
 #trendy-ai-workflow-review input:not([type=checkbox]), #trendy-ai-workflow-review select { display: block; width: 100%; color: white; background: #111827; border: 1px solid #6b7280; border-radius: .25rem; padding: .5rem; }
 #trendy-ai-workflow-review .trendy-ai-warning { color: #fbbf24; margin: .5rem 0; }
+
+.trendy-template-picker { border: 1px solid #4b5563; border-radius: .5rem; padding: .75rem; margin-bottom: 1rem; color: #d1d5db; font-size: .8rem; }
+.trendy-template-picker > div { display: flex; flex-wrap: wrap; gap: .5rem; margin: .5rem 0; }
+.trendy-template-picker select { min-width: 0; flex: 1 1 220px; }
+.trendy-template-picker select, .trendy-template-picker button, #trendy-ai-retry-full { background: #111827; color: white; border: 1px solid #6b7280; border-radius: .3rem; padding: .5rem; }
+.trendy-template-picker p, .trendy-full-catalog { color: #9ca3af; font-size: .72rem; }
+.trendy-full-catalog { display: block; margin-top: .75rem; }
+#trendy-ai-retry-full { margin-top: .75rem; font-size: .8rem; }

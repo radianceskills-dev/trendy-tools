@@ -22,7 +22,7 @@ export function readPlanV2(raw) {
   const steps = p.steps.map((rawStep, i) => {
     const step = object(rawStep, `steps[${i}]`);
     exactKeys(step, ['operation', 'parameters'], `steps[${i}]`);
-    if (typeof step.operation !== 'string' || !own(CAPABILITIES, step.operation)) throw new Error(`Unsupported operation at step ${i + 1}.`);
+    if (typeof step.operation !== 'string' || (!own(CAPABILITIES, step.operation) || !CAPABILITIES[step.operation].enabled)) throw new Error(`Unsupported operation at step ${i + 1}.`);
     const parameters = object(step.parameters, `steps[${i}].parameters`);
     exactKeys(parameters, CAPABILITIES[step.operation].aiKeys, `steps[${i}].parameters`);
     return { operation: step.operation, parameters: { ...parameters } };
@@ -79,10 +79,12 @@ export function compilePlanV2(raw, context = {}) {
   return createSerializedWorkflow({ steps, download: { filename: result.plan.filename } });
 }
 
-export function buildPlanV2Prompt() {
-  const entries = Object.entries(CAPABILITIES).map(([id, c]) => `${id}: ${c.label}. Parameters: ${c.promptControls} Required: ${c.required.join(', ') || 'none'}.`);
+export function buildPlanV2Prompt(operationIds = Object.keys(CAPABILITIES)) {
+  if (!Array.isArray(operationIds) || !operationIds.length || new Set(operationIds).size !== operationIds.length || operationIds.some(id => !own(CAPABILITIES, id) || !CAPABILITIES[id].enabled)) throw new Error('Invalid capability selection.');
+  const catalog = Object.entries(CAPABILITIES).filter(([,c]) => c.enabled).map(([id,c]) => `${id}: ${c.label}`).join('; ');
+  const entries = operationIds.map(id => [id, CAPABILITIES[id]]).map(([id, c]) => `${id}: ${c.label}. Parameters: ${c.promptControls} Required: ${c.required.join(', ') || 'none'}.`);
   return `Translate the request into a PDF workflow proposal. Return ONE JSON object only.
-Schema: {"version":2,"steps":[{"operation":"compress","parameters":{}}],"unhandled":[]}
+Schema: {"version":2,"steps":[{"operation":"${operationIds[0]}","parameters":{}}],"unhandled":[]}
 Optional filename is a simple name; omit unless requested. Maximum 12 steps in requested order.
 Never invent or omit operations. Put unsupported or unclear request portions in unhandled (short strings).
 Use null for missing required parameters. Do not invent page numbers, angles, watermark text, or passwords.
@@ -91,5 +93,7 @@ Encryption has NO AI parameters: passwords are entered locally. Encryption must 
 Rotation affects ALL pages, not selected pages. Split selects pages into one PDF per input, not separate PDFs per page.
 Metadata sets nonempty fields and does not erase them. Use unhandled for unsupported erasure.
 Use {} for ordinary defaults. The user reviews, resolves missing choices and explicitly runs.
+Catalog (names only): ${catalog}
+Detailed parameters follow only for selected operations. If needed details are absent, name the missing capability in unhandled. Never omit part of the request or invent parameters.
 ${entries.join('\n')}`;
 }

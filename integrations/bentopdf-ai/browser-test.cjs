@@ -79,6 +79,7 @@ async function configuredPage(browser, pageUrl, responseContent, provider = "ope
   const page = await context.newPage();
   let providerRequest;
   let requestCount = 0;
+  const requests = [];
   const endpoints = {openrouter:"https://openrouter.ai/api/v1/chat/completions",bai:"https://api.b.ai/v1/chat/completions",opencode:"https://opencode.ai/zen/v1/chat/completions"};
 
   await page.addInitScript((providerId) => {
@@ -100,11 +101,12 @@ async function configuredPage(browser, pageUrl, responseContent, provider = "ope
     async (route) => {
       requestCount++;
       providerRequest = route.request().postDataJSON();
+      requests.push(providerRequest);
       await route.fulfill({
         status: httpStatus,
         contentType: "application/json",
         body: JSON.stringify({
-          choices: [{ message: { content: responseContent } }],
+          choices: [{ message: { content: typeof responseContent === 'function' ? responseContent(requestCount) : responseContent } }],
         }),
       });
     },
@@ -126,7 +128,7 @@ async function configuredPage(browser, pageUrl, responseContent, provider = "ope
       document.querySelector("#trendy-ai-workflow-button")?.dataset
         .initialized === "true",
   );
-  return { context, page, providerRequest: () => providerRequest, requestCount: () => requestCount };
+  return { context, page, providerRequest: () => providerRequest, requestCount: () => requestCount, requests };
 }
 
 (async () => {
@@ -376,7 +378,89 @@ async function configuredPage(browser, pageUrl, responseContent, provider = "ope
       assert.equal(h.requestCount(),1);
       await h.context.close();
     }
-    console.log("BentoPDF AI mocked browser tests passed: review, clarification, all 13 processing constructors, 3 providers, secret persistence, errors");
+    // Local templates work with NO provider configuration or outbound requests.
+    for (const id of ['merge-number-compress','rotate-compress','watermark-compress','merge-protect']) {
+      const context = await browser.newContext({viewport:{width:390,height:844},locale:'en-US',serviceWorkers:'block'});
+      let externalRequests=0;
+      await context.route('**/*', route => {
+        if(new URL(route.request().url()).origin===new URL(pageUrl).origin) return route.continue();
+        externalRequests++; return route.abort('blockedbyclient');
+      });
+      const page = await context.newPage();
+      await page.goto(pageUrl,{waitUntil:'domcontentloaded'});
+      await page.waitForFunction(()=>document.querySelector('#trendy-ai-workflow-button')?.dataset.initialized==='true');
+      await page.locator('#trendy-ai-workflow-button').click();
+      assert.equal(await page.locator('#trendy-ai-workflow-create').isDisabled(),true);
+      await page.locator('#trendy-workflow-template').selectOption(id);
+      await page.locator('#trendy-workflow-template-preview').click();
+      const box=await page.locator('.trendy-ai-workflow-card').boundingBox();
+      assert.ok(box.x>=0 && box.x+box.width<=391, 'Mobile modal overflows viewport');
+      if(id==='rotate-compress' || id==='watermark-compress') {
+        if(id==='rotate-compress') await page.locator('#trendy-choice-0-angle').selectOption('180');
+        else await page.locator('#trendy-choice-0-text').fill('LOCAL WATERMARK');
+        await page.locator('#trendy-review-confirm').check();
+        await page.locator('#trendy-ai-workflow-apply').click();
+      }
+      if(id==='merge-protect') await page.locator('#trendy-secret-1-userPassword').fill('LOCAL-TEMPLATE-ONLY');
+      assert.equal(await page.locator('#node-count').textContent(),'0 nodes');
+      await page.locator('#trendy-review-confirm').check();
+      await page.locator('#trendy-ai-workflow-apply').click();
+      const expected=id==='merge-number-compress'?'5 nodes':'4 nodes';
+      await page.waitForFunction(n=>document.querySelector('#node-count')?.textContent===n,expected);
+      assert.match(await page.locator('#status-text').textContent(),/^Template workflow created/);
+      assert.equal(externalRequests,0,'Templates must not contact providers or external assets');
+      await context.close();
+    }
+
+    // Omission guard blocks loading; only an explicit retry makes the second request.
+    {
+      const short={version:2,steps:[{operation:'merge',parameters:{}}],unhandled:[]};
+      const complete={version:2,steps:[...short.steps,{operation:'compress',parameters:{}}],unhandled:[]};
+      const h=await configuredPage(browser,pageUrl,n=>JSON.stringify(n===1?short:complete));
+      await h.page.locator('#trendy-ai-workflow-button').click();
+      await h.page.locator('#trendy-ai-workflow-prompt').fill('Merge PDFs and compress.');
+      await h.page.locator('#trendy-ai-workflow-create').click();
+      await h.page.locator('#trendy-ai-retry-full').waitFor({state:'visible'});
+      assert.equal(h.requestCount(),1);
+      assert.equal(await h.page.locator('#node-count').textContent(),'0 nodes');
+      assert.equal(await h.page.locator('#trendy-ai-workflow-apply').isVisible(),false);
+      assert.ok(!h.requests[0].messages[0].content.includes('tileGapX'));
+      await h.page.locator('#trendy-ai-retry-full').click();
+      await h.page.locator('#trendy-review-confirm').check();
+      assert.equal(h.requestCount(),2);
+      assert.ok(h.requests[1].messages[0].content.includes('tileGapX'));
+      await h.page.locator('#trendy-ai-workflow-apply').click();
+      await h.page.waitForFunction(()=>document.querySelector('#node-count')?.textContent==='4 nodes');
+      await h.context.close();
+    }
+
+    // Attached files prevent AI replacement even after a reviewed proposal.
+    {
+      const h=await configuredPage(browser,pageUrl,JSON.stringify({version:2,steps:[{operation:'merge',parameters:{}}],unhandled:[]}));
+      await h.page.locator('#trendy-ai-workflow-button').click();
+      await h.page.locator('#trendy-ai-workflow-prompt').fill('Merge PDFs.');
+      await h.page.locator('#trendy-ai-workflow-create').click();
+      await h.page.locator('#trendy-review-confirm').check();
+      await h.page.locator('#trendy-ai-workflow-apply').click();
+      await h.page.waitForFunction(()=>document.querySelector('#node-count')?.textContent==='3 nodes');
+      const locale=JSON.parse(fs.readFileSync(path.join(root,'.build-cache/bentopdf/public/locales/en/tools.json'),'utf8'));
+      await h.page.locator('#rete-container').getByText(locale.pdfWorkflow.specialNodes.pdfInput.name,{exact:true}).click();
+      const {PDFDocument}=require(path.join(root,'.build-cache/bentopdf/node_modules/pdf-lib'));
+      const pdf=await PDFDocument.create();pdf.addPage();
+      await h.page.locator('#settings-content input[type=file]').setInputFiles({name:'synthetic-attached.pdf',mimeType:'application/pdf',buffer:Buffer.from(await pdf.save())});
+      await h.page.locator('#settings-content').getByText('synthetic-attached.pdf',{exact:true}).waitFor({state:'visible'});
+      await h.page.locator('#trendy-ai-workflow-button').click();
+      await h.page.locator('#trendy-ai-workflow-create').click();
+      await h.page.locator('#trendy-review-confirm').check();
+      await h.page.locator('#trendy-ai-workflow-apply').click();
+      await h.page.waitForFunction(()=>document.querySelector('#trendy-ai-workflow-status')?.textContent?.includes('attached files'));
+      assert.equal(await h.page.locator('#node-count').textContent(),'3 nodes');
+      await h.page.keyboard.press('Escape');
+      assert.equal(await h.page.locator('#settings-content').getByText('synthetic-attached.pdf',{exact:true}).count(),1);
+      await h.context.close();
+    }
+
+    console.log("BentoPDF AI mocked browser tests passed: review, clarification, all 13 processing constructors, 3 providers, secret persistence, errors, offline mobile templates, explicit fallback, attached files");
   } finally {
     await browser.close();
     await new Promise((resolve) => server.close(resolve));

@@ -38,6 +38,15 @@
       </button>
     </div>
 
+    <section class="trendy-template-picker" aria-label="Local workflow templates">
+      <label for="trendy-workflow-template">Start from a reviewed template — no AI required</label>
+      <div>
+        <select id="trendy-workflow-template" aria-label="Workflow template"></select>
+        <button id="trendy-workflow-template-preview" type="button">Preview template</button>
+      </div>
+      <p>Templates use the same review, local fields and safe loading. Nothing runs automatically.</p>
+    </section>
+
     <label
       for="trendy-ai-workflow-prompt"
       class="block text-xs font-medium text-gray-300 mb-1.5"
@@ -56,6 +65,10 @@
       <code>trendytools.ai.v1</code>. Configure it on the
       <a href="/" class="text-violet-400 hover:text-violet-300">dashboard</a>.
     </p>
+
+    <label class="trendy-full-catalog"><input id="trendy-ai-full-catalog" type="checkbox" /> Send full capability details (skip prompt shortlisting)</label>
+    <p id="trendy-ai-selection-status" class="text-xs text-gray-400 mt-2" aria-live="polite"></p>
+    <button id="trendy-ai-retry-full" type="button" class="hidden">Retry with full details — one additional AI request</button>
 
     <p
       id="trendy-ai-workflow-status"

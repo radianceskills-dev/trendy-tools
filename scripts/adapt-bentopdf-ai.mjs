@@ -14,7 +14,7 @@ function replaceOnce(source, from, to, file) {
   return source.replace(from, to);
 }
 
-for (const file of ["planner-v2.js", "safe-workflow.js"]) {
+for (const file of ["planner-v2.js", "safe-workflow.js", "capability-selection.js", "workflow-templates.js"]) {
   await copyFile(resolve(integrationRoot, file), resolve(sourceRoot, "src/js/workflow", file));
 }
 await copyFile(
