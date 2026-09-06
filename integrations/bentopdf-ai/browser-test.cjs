@@ -326,15 +326,15 @@ async function configuredPage(browser, pageUrl, responseContent, provider = "ope
       const stored = await h.page.evaluate(() => localStorage.getItem('bento-pdf-workflow-templates'));
       assert.ok(!stored.includes('LOCAL_ONLY'));
       assert.ok(!stored.includes('userPassword'));
+      await h.page.locator('#alert-ok').click();
+      await h.page.locator('#alert-modal').waitFor({state:'hidden'});
       // Legacy template imports must not rehydrate passwords either.
       const encryptNode = exportedData.nodes.find(n => n.type === 'EncryptNode');
       encryptNode.controls.userPassword = 'LEGACY_IMPORTED_SECRET';
       exportedData.nodes = [exportedData.nodes[0], encryptNode, exportedData.nodes.at(-1)];
       exportedData.nodes.forEach((n,i) => { n.position = {x:50,y:20 + 190*i}; });
       exportedData.connections = exportedData.nodes.slice(0,-1).map((n,i) => ({id:`legacy-${i}`,source:n.id,sourceOutput:'pdf',target:exportedData.nodes[i+1].id,targetInput:'pdf'}));
-      const chooserPromise = h.page.waitForEvent('filechooser');
-      await h.page.locator('#import-btn').click();
-      const chooser = await chooserPromise;
+      const [chooser] = await Promise.all([h.page.waitForEvent('filechooser'), h.page.locator('#import-btn').click()]);
       await chooser.setFiles({name:'legacy.json',mimeType:'application/json',buffer:Buffer.from(JSON.stringify(exportedData))});
       await h.page.waitForFunction(() => document.querySelector('#node-count')?.textContent === '3 nodes');
       await h.page.locator('#rete-container').getByText('Encrypt',{exact:true}).click();
