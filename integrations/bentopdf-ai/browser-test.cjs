@@ -295,6 +295,7 @@ async function configuredPage(browser, pageUrl, responseContent, provider = "ope
       await h.page.locator('#trendy-ai-workflow-button').click();
       await h.page.locator('#trendy-ai-workflow-prompt').fill('Insert blank pages.');
       await h.page.locator('#trendy-ai-workflow-create').click();
+      await h.page.locator('#trendy-choice-0-blankPosition').waitFor({state:'visible'});
       assert.deepEqual(await h.page.locator('#trendy-choice-0-blankPosition option').allTextContents(),['Choose…','start','end','after']);
       await h.page.locator('#trendy-choice-0-blankPosition').selectOption('after');
       await h.page.locator('#trendy-review-confirm').check();
