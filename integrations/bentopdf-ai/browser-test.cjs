@@ -64,33 +64,44 @@ function listen() {
   });
 }
 
-async function configuredPage(browser, pageUrl, responseContent) {
+async function configuredPage(browser, pageUrl, responseContent, provider = "openrouter", httpStatus = 200) {
   const context = await browser.newContext({
     viewport: { width: 1440, height: 900 },
+    serviceWorkers: "block",
+    locale: "en-US",
+  });
+  await context.route('**/*', async route => {
+    const url = new URL(route.request().url());
+    if (url.origin === new URL(pageUrl).origin) return route.continue();
+    // Page-level mock below handles the one authorized provider route. Never fall through externally.
+    return route.abort('blockedbyclient');
   });
   const page = await context.newPage();
   let providerRequest;
+  let requestCount = 0;
+  const endpoints = {openrouter:"https://openrouter.ai/api/v1/chat/completions",bai:"https://api.b.ai/v1/chat/completions",opencode:"https://opencode.ai/zen/v1/chat/completions"};
 
-  await page.addInitScript(() => {
+  await page.addInitScript((providerId) => {
     localStorage.setItem(
       "trendytools.ai.v1",
       JSON.stringify({
         version: 1,
-        provider: "openrouter",
+        provider: providerId,
         providerLabel: "OpenRouter",
         apiKey: "mock-key",
         model: "mock-model",
         endpoint: "https://untrusted.example.invalid/chat/completions",
       }),
     );
-  });
+  }, provider);
 
   await page.route(
-    "https://openrouter.ai/api/v1/chat/completions",
+    endpoints[provider],
     async (route) => {
+      requestCount++;
       providerRequest = route.request().postDataJSON();
       await route.fulfill({
-        status: 200,
+        status: httpStatus,
         contentType: "application/json",
         body: JSON.stringify({
           choices: [{ message: { content: responseContent } }],
@@ -115,7 +126,7 @@ async function configuredPage(browser, pageUrl, responseContent) {
       document.querySelector("#trendy-ai-workflow-button")?.dataset
         .initialized === "true",
   );
-  return { context, page, providerRequest: () => providerRequest };
+  return { context, page, providerRequest: () => providerRequest, requestCount: () => requestCount };
 }
 
 (async () => {
@@ -131,7 +142,10 @@ async function configuredPage(browser, pageUrl, responseContent) {
     {
       const context = await browser.newContext({
         viewport: { width: 1440, height: 900 },
+    serviceWorkers: "block",
+    locale: "en-US",
       });
+      await context.route('**/*', route => new URL(route.request().url()).origin === `http://127.0.0.1:${port}` ? route.continue() : route.abort('blockedbyclient'));
       const page = await context.newPage();
       const response = await page.goto(
         `http://127.0.0.1:${port}/tools/bentopdf/`,
@@ -185,24 +199,13 @@ async function configuredPage(browser, pageUrl, responseContent) {
     }
 
     const validPlan = JSON.stringify({
-      version: 1,
+      version: 2,
       steps: [
-        { type: "MergeNode", controls: { retainPageLabels: false } },
-        {
-          type: "PageNumbersNode",
-          controls: {
-            position: "bottom-center",
-            fontSize: 12,
-            numberFormat: "page_x_of_y",
-            color: "#000000",
-          },
-        },
-        {
-          type: "CompressNode",
-          controls: { algorithm: "condense", compressionLevel: "balanced" },
-        },
+        { operation: 'merge', parameters: { retainPageLabels: false } },
+        { operation: 'page_numbers', parameters: { position: 'bottom-center', fontSize: 12, numberFormat: 'page_x_of_y', color: '#000000' } },
+        { operation: 'compress', parameters: { algorithm: 'condense', compressionLevel: 'balanced' } },
       ],
-      download: { filename: "final-report.pdf" },
+      filename: 'final-report.pdf', unhandled: [],
     });
 
     {
@@ -222,6 +225,9 @@ async function configuredPage(browser, pageUrl, responseContent) {
           "Merge my PDFs, add page numbers at the bottom center, compress them, and download as final-report.pdf.",
         );
       await page.locator("#trendy-ai-workflow-create").click();
+      await page.locator('#trendy-review-confirm').check();
+      assert.equal(await page.locator('#node-count').textContent(), '0 nodes');
+      await page.locator('#trendy-ai-workflow-apply').click();
       await page.waitForFunction(
         () => document.querySelector("#node-count")?.textContent === "5 nodes",
       );
@@ -243,11 +249,7 @@ async function configuredPage(browser, pageUrl, responseContent) {
       await context.close();
     }
 
-    const invalidRotationPlan = JSON.stringify({
-      version: 1,
-      steps: [{ type: "RotateNode", controls: { angle: 90 } }],
-      download: { filename: "fixed.pdf" },
-    });
+    const invalidRotationPlan = JSON.stringify({version: 2, steps: [{operation: 'rotate', parameters: {angle: 90}}], unhandled: []});
 
     {
       const { context, page } = await configuredPage(
@@ -260,20 +262,121 @@ async function configuredPage(browser, pageUrl, responseContent) {
         .locator("#trendy-ai-workflow-prompt")
         .fill("Fix the document orientation.");
       await page.locator("#trendy-ai-workflow-create").click();
-      await page.waitForFunction(
-        () =>
-          document.querySelector("#trendy-ai-workflow-status")?.dataset.type ===
-          "error",
-      );
-      assert.match(
-        (await page.locator("#trendy-ai-workflow-status").textContent()) || "",
-        /explicitly supplies/,
-      );
-      assert.equal(await page.locator("#node-count").textContent(), "0 nodes");
+      await page.locator('#trendy-choice-0-angle').waitFor({state:'visible'});
+      assert.equal(await page.locator('#node-count').textContent(), '0 nodes');
+      await page.locator('#trendy-choice-0-angle').selectOption('270');
+      await page.locator('#trendy-review-confirm').check();
+      await page.locator('#trendy-ai-workflow-apply').click();
+      await page.locator('#trendy-review-confirm').check();
+      await page.locator('#trendy-ai-workflow-apply').click();
+      await page.waitForFunction(() => document.querySelector('#node-count')?.textContent === '3 nodes');
       await context.close();
     }
 
-    console.log("BentoPDF AI mocked browser tests passed");
+    // The other providers use only their fixed, mocked endpoints.
+    for (const provider of ['bai','opencode']) {
+      const h = await configuredPage(browser,pageUrl,validPlan,provider);
+      await h.page.locator('#trendy-ai-workflow-button').click();
+      await h.page.locator('#trendy-ai-workflow-prompt').fill('Merge PDFs, add page numbers and compress.');
+      await h.page.locator('#trendy-ai-workflow-create').click();
+      await h.page.locator('#trendy-review-confirm').check();
+      await h.page.locator('#trendy-ai-workflow-apply').click();
+      await h.page.waitForFunction(() => document.querySelector('#node-count')?.textContent === '5 nodes');
+      assert.equal(h.requestCount(),1);
+      await h.context.close();
+    }
+
+    // Exercise every remaining processing node's actual constructor/controls, not its PDF engine.
+    {
+      const contractPlan = {version:2,unhandled:[],steps:[
+        {operation:'split',parameters:{pages:'1'}},
+        {operation:'delete_pages',parameters:{pages:'2'}},
+        {operation:'watermark',parameters:{text:'TEST'}},
+        {operation:'header_footer',parameters:{headerLeft:'Test'}},
+        {operation:'ocr',parameters:{language:'eng'}},
+        {operation:'sanitize',parameters:{}},
+        {operation:'flatten',parameters:{}},
+        {operation:'edit_metadata',parameters:{title:'Test'}},
+        {operation:'encrypt',parameters:{}},
+      ]};
+      const h = await configuredPage(browser,pageUrl,JSON.stringify(contractPlan));
+      await h.page.locator('#trendy-ai-workflow-button').click();
+      await h.page.locator('#trendy-ai-workflow-prompt').fill('Select pages, delete page 2, watermark, add header, OCR, sanitize, flatten, set metadata and encrypt.');
+      await h.page.locator('#trendy-ai-workflow-create').click();
+      await h.page.locator('#trendy-secret-8-userPassword').fill('LOCAL_ONLY_TEST_PASSWORD');
+      await h.page.locator('#trendy-secret-8-ownerPassword').fill('LOCAL_ONLY_OWNER_PASSWORD');
+      assert.equal(await h.page.locator('#trendy-secret-8-userPassword').getAttribute('type'),'password');
+      await h.page.locator('#trendy-review-confirm').check();
+      await h.page.locator('#trendy-ai-workflow-apply').click();
+      await h.page.waitForFunction(() => document.querySelector('#node-count')?.textContent === '11 nodes');
+      assert.equal(h.requestCount(),1);
+      assert.ok(!JSON.stringify(h.providerRequest()).includes('LOCAL_ONLY'));
+      const downloadPromise = h.page.waitForEvent('download');
+      await h.page.locator('#export-btn').click();
+      const download = await downloadPromise;
+      const exported = fs.readFileSync(await download.path(),'utf8');
+      assert.ok(!exported.includes('LOCAL_ONLY'));
+      assert.ok(!exported.includes('userPassword'));
+      assert.ok(!exported.includes('ownerPassword'));
+      const exportedData = JSON.parse(exported);
+      assert.equal(exportedData.version,1);
+      assert.equal(exportedData.nodes.length,11);
+      await h.page.locator('#save-btn').click();
+      await h.page.locator('#save-template-name').fill('Secret-free test');
+      await h.page.locator('#save-template-confirm').click();
+      await h.page.waitForFunction(() => localStorage.getItem('bento-pdf-workflow-templates')?.includes('Secret-free test'));
+      const stored = await h.page.evaluate(() => localStorage.getItem('bento-pdf-workflow-templates'));
+      assert.ok(!stored.includes('LOCAL_ONLY'));
+      assert.ok(!stored.includes('userPassword'));
+      await h.page.locator('#alert-ok').click();
+      await h.page.locator('#alert-modal').waitFor({state:'hidden'});
+      // Legacy template imports must not rehydrate passwords either.
+      const encryptNode = exportedData.nodes.find(n => n.type === 'EncryptNode');
+      encryptNode.controls.userPassword = 'LEGACY_IMPORTED_SECRET';
+      exportedData.nodes = [exportedData.nodes[0], encryptNode, exportedData.nodes.at(-1)];
+      exportedData.nodes.forEach((n,i) => { n.position = {x:50,y:20 + 190*i}; });
+      exportedData.connections = exportedData.nodes.slice(0,-1).map((n,i) => ({id:`legacy-${i}`,source:n.id,sourceOutput:'pdf',target:exportedData.nodes[i+1].id,targetInput:'pdf'}));
+      const [chooser] = await Promise.all([h.page.waitForEvent('filechooser'), h.page.locator('#import-btn').click()]);
+      await chooser.setFiles({name:'legacy.json',mimeType:'application/json',buffer:Buffer.from(JSON.stringify(exportedData))});
+      await h.page.waitForFunction(() => document.querySelector('#node-count')?.textContent === '3 nodes');
+      const encryptLabel = JSON.parse(fs.readFileSync(path.join(root,'.build-cache/bentopdf/public/locales/en/tools.json'),'utf8')).encryptPdf.name;
+      await h.page.locator('#rete-container').getByText(encryptLabel,{exact:true}).click();
+      await h.page.locator('#settings-content input[type=password]').first().waitFor({state:'visible'});
+      assert.equal(await h.page.locator('#settings-content input[type=password]').count(),2);
+      for(const input of await h.page.locator('#settings-content input[type=password]').all()) assert.equal(await input.inputValue(),'');
+      const nextDownload = h.page.waitForEvent('download');
+      await h.page.locator('#export-btn').click();
+      assert.ok(!fs.readFileSync(await (await nextDownload).path(),'utf8').includes('LEGACY_IMPORTED_SECRET'));
+      await h.context.close();
+    }
+
+    // Missing values stay local and never use upstream destructive defaults.
+    {
+      const h = await configuredPage(browser,pageUrl,JSON.stringify({version:2,steps:[{operation:'delete_pages',parameters:{}}],unhandled:[]}));
+      await h.page.locator('#trendy-ai-workflow-button').click();
+      await h.page.locator('#trendy-ai-workflow-prompt').fill('Delete some pages.');
+      await h.page.locator('#trendy-ai-workflow-create').click();
+      await h.page.locator('#trendy-choice-0-pages').fill('2-4');
+      assert.equal(await h.page.locator('#node-count').textContent(),'0 nodes');
+      await h.page.locator('#trendy-review-confirm').check();
+      await h.page.locator('#trendy-ai-workflow-apply').click();
+      await h.page.locator('#trendy-review-confirm').check();
+      await h.page.locator('#trendy-ai-workflow-apply').click();
+      await h.page.waitForFunction(() => document.querySelector('#node-count')?.textContent === '3 nodes');
+      assert.equal(h.requestCount(),1);
+      await h.context.close();
+    }
+    for (const [content,statusCode] of [['not JSON',200],[validPlan,429]]) {
+      const h = await configuredPage(browser,pageUrl,content,'openrouter',statusCode);
+      await h.page.locator('#trendy-ai-workflow-button').click();
+      await h.page.locator('#trendy-ai-workflow-prompt').fill('Merge PDFs.');
+      await h.page.locator('#trendy-ai-workflow-create').click();
+      await h.page.waitForFunction(() => document.querySelector('#trendy-ai-workflow-status')?.dataset.type === 'error');
+      assert.equal(await h.page.locator('#node-count').textContent(),'0 nodes');
+      assert.equal(h.requestCount(),1);
+      await h.context.close();
+    }
+    console.log("BentoPDF AI mocked browser tests passed: review, clarification, all 13 processing constructors, 3 providers, secret persistence, errors");
   } finally {
     await browser.close();
     await new Promise((resolve) => server.close(resolve));
