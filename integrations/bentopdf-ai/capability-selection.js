@@ -4,7 +4,12 @@ const normalize = s => s.normalize('NFKC').toLowerCase().replace(/[\u2018\u2019]
 const escaped = s => s.replace(/[.*+?^${}()|[\]\\]/g,'\\$&');
 const hasPhrase = (s, phrase) => new RegExp(`(?:^|[^a-z])${escaped(phrase)}(?:$|[^a-z])`, 'i').test(s);
 const phrases = id => [id.replace(/_/g,' '), ...CAPABILITIES[id].aliases];
-const matches = (s, id) => phrases(id).some(alias => hasPhrase(s,alias));
+const flexiblePatterns = {
+  reverse_pages: /\breverse\b(?:\s+[a-z0-9]+){0,3}\s+pages?(?:\s+order)?\b/i,
+  remove_annotations: /\b(?:remove|strip|delete|clear)\b(?:\s+[a-z0-9]+){0,3}\s+annotations?\b/i,
+  add_blank_page: /\b(?:add|insert)\b(?:\s+[a-z0-9]+){0,4}\s+blank\s+pages?\b/i,
+};
+const matches = (s, id) => phrases(id).some(alias => hasPhrase(s,alias)) || flexiblePatterns[id]?.test(s) === true;
 
 /** English lexical hints are an optimization, never evidence of semantic completeness. */
 export function selectCapabilities(request, options = {}) {
@@ -17,7 +22,7 @@ export function selectCapabilities(request, options = {}) {
   if (!detected.length) reasons.push('No strong operation match');
   if (/[^\u0000-\u007f]/.test(normalized)) reasons.push('Non-English or mixed-language text');
   if (/\b(?:not|no|never|without|avoid|except|only|don\x27t|do not)\b/.test(normalized)) reasons.push('Negation or restrictive wording needs wider context');
-  if (/\b(?:redact|redaction|translate|sign|signature|convert|reorder|booklet|decrypt|safe to share)\b/.test(normalized)) reasons.push('Potentially unsupported or ambiguous operation');
+  if (/\b(?:redact|redaction|translate|sign|signature|convert|booklet|decrypt|safe to share)\b/.test(normalized)) reasons.push('Potentially unsupported or ambiguous operation');
   if (detected.includes('watermark') && detected.includes('rotate')) reasons.push('Watermark angle may be mistaken for page rotation');
   if (detected.includes('sanitize') && detected.includes('edit_metadata')) reasons.push('Metadata removal is not metadata editing');
   if (detected.length > 6 || normalized.split(' ').length > 50) reasons.push('Complex request');

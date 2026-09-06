@@ -12,6 +12,9 @@ export const PHASE1_NODE_TYPES = Object.freeze([
   "SanitizeNode",
   "FlattenNode",
   "EditMetadataNode",
+  "ReversePagesNode",
+  "RemoveAnnotationsNode",
+  "AddBlankPageNode",
 ]);
 
 const NODE_TYPE_SET = new Set(PHASE1_NODE_TYPES);
@@ -270,7 +273,20 @@ export function normalizeControls(type, rawControls, context, path) {
         );
       }
       break;
+    case "ReversePagesNode":
+    case "RemoveAnnotationsNode":
     case "FlattenNode":
+      break;
+    case "AddBlankPageNode":
+      optional("blankPosition", (value, valuePath) =>
+        oneOf(value, ["start", "end", "after"], valuePath),
+      );
+      optional("afterPage", (value, valuePath) =>
+        number(value, valuePath, 1, 100000, true),
+      );
+      optional("count", (value, valuePath) =>
+        number(value, valuePath, 1, 100, true),
+      );
       break;
     default:
       fail(`${path} uses unsupported node type ${type}.`);
@@ -363,6 +379,9 @@ export const CONTROL_KEYS = Object.freeze({
   SanitizeNode: [...SANITIZE_BOOLEAN_KEYS],
   FlattenNode: [],
   EditMetadataNode: [...METADATA_KEYS],
+  ReversePagesNode: [],
+  RemoveAnnotationsNode: [],
+  AddBlankPageNode: ["blankPosition", "afterPage", "count"],
 });
 
 
@@ -397,6 +416,9 @@ Allowed controls and value types:
 - SanitizeNode: flattenForms, removeMetadata, removeAnnotations, removeJavascript, removeEmbeddedFiles, removeLayers, removeLinks, removeStructureTree, removeMarkInfo, removeFonts booleans.
 - FlattenNode: no controls.
 - EditMetadataNode: title, author, subject, keywords, creator, producer strings.
+- ReversePagesNode: no controls.
+- RemoveAnnotationsNode: no controls.
+- AddBlankPageNode: blankPosition start, end, or after; afterPage integer 1..100000 when blankPosition is after; count integer 1..100.
 
 Before responding, verify that every key, node type, control, enum, boolean, number, page range, and filename follows this schema.`;
 }
@@ -603,6 +625,42 @@ const capabilities = {
     "output": "pdf",
     "enabled": true
   },
+  "reverse_pages": {
+    "nodeType": "ReversePagesNode",
+    "label": "Reverse page order",
+    "required": [],
+    "defaults": {},
+    "warning": "The first page becomes last and the last page becomes first.",
+    "batch": "preserve",
+    "input": "pdf",
+    "output": "pdf",
+    "enabled": true
+  },
+  "remove_annotations": {
+    "nodeType": "RemoveAnnotationsNode",
+    "label": "Remove annotations",
+    "required": [],
+    "defaults": {},
+    "warning": "All page annotations will be removed. This is not content redaction.",
+    "batch": "preserve",
+    "input": "pdf",
+    "output": "pdf",
+    "enabled": true
+  },
+  "add_blank_page": {
+    "nodeType": "AddBlankPageNode",
+    "label": "Add blank pages",
+    "required": ["blankPosition"],
+    "defaults": {"count": 1},
+    "choices": {"blankPosition": ["start", "end", "after"]},
+    "valueTypes": {"afterPage": "number", "count": "number"},
+    "requiresWhen": {"afterPage": {"blankPosition": "after"}},
+    "warning": null,
+    "batch": "preserve",
+    "input": "pdf",
+    "output": "pdf",
+    "enabled": true
+  },
   "edit_metadata": {
     "nodeType": "EditMetadataNode",
     "label": "Set nonempty metadata fields",
@@ -748,6 +806,18 @@ const selectionHints = {
       "flattening",
       "make forms noneditable"
     ]
+  ],
+  "reverse_pages": [
+    "Organize",
+    ["reverse pages", "reverse page order", "reverse the pages", "last page first"]
+  ],
+  "remove_annotations": [
+    "Annotate",
+    ["remove annotations", "strip annotations", "delete annotations", "clear annotations"]
+  ],
+  "add_blank_page": [
+    "Organize",
+    ["add blank page", "add blank pages", "insert blank page", "insert blank pages"]
   ],
   "edit_metadata": [
     "Metadata",

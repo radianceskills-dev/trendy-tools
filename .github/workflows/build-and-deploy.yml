@@ -57,6 +57,10 @@ jobs:
             # BentoPDF depends on install-time build hooks (including esbuild and OCR tooling).
             # npm runs those hooks on the Linux CI runner; pnpm 10 blocks them by default.
             npm install --legacy-peer-deps
+            mkdir -p src/tests
+            cp ../../integrations/bentopdf-ai/workflow-node-execution.test.ts src/tests/trendy-workflow-node-execution.test.ts
+            npx vitest run src/tests/trendy-workflow-node-execution.test.ts
+            rm src/tests/trendy-workflow-node-execution.test.ts
             node ../../integrations/bentopdf-ai/workflow-plan.test.mjs
             node ../../scripts/adapt-bentopdf-ai.mjs . ../../integrations/bentopdf-ai
             node ../../scripts/adapt-bentopdf-home.mjs . ../../integrations/bentopdf-home

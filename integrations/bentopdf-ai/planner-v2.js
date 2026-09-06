@@ -37,18 +37,26 @@ export function assessPlan(raw, context = {}) {
   const steps = plan.steps.map((step, i) => {
     const cap = CAPABILITIES[step.operation];
     const parameters = { ...cap.defaults, ...step.parameters };
+    const choicesFor = key => cap.choices?.[key] || (key === 'angle' ? [90, 180, 270] : null);
     const ask = (key, label, choices = null) => {
       if (!questions.some(q => q.step === i && q.key === key)) questions.push({ step: i, key, label, choices });
     };
     for (const key of cap.required) {
       if (!own(step.parameters, key) || step.parameters[key] == null || step.parameters[key] === '') {
-        ask(key, `${cap.label}: ${key}`, key === 'angle' ? [90, 180, 270] : null);
+        ask(key, `${cap.label}: ${key}`, choicesFor(key));
         delete parameters[key];
       }
     }
     for (const [key, value] of Object.entries(step.parameters)) if (value === null) {
-      ask(key, `${cap.label}: ${key}`, key === 'angle' && step.operation === 'rotate' ? [90, 180, 270] : null);
+      ask(key, `${cap.label}: ${key}`, choicesFor(key));
       delete parameters[key];
+    }
+    for (const [key, condition] of Object.entries(cap.requiresWhen || {})) {
+      const active = Object.entries(condition).every(([otherKey, expected]) => parameters[otherKey] === expected);
+      if (active && (!own(step.parameters, key) || step.parameters[key] == null || step.parameters[key] === '')) {
+        ask(key, `${cap.label}: ${key}`, choicesFor(key));
+        delete parameters[key];
+      }
     }
     if (cap.atLeastOne && !cap.atLeastOne.some(k => typeof parameters[k] === 'string' && parameters[k].trim())) {
       const key = cap.atLeastOne[0];

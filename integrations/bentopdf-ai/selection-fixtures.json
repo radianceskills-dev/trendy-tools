@@ -23,5 +23,8 @@
  {"request":"Make this safe to share.","expected":[],"mode":"full"},
  {"request":"รวม PDF และบีบอัดไฟล์","expected":["merge","compress"],"mode":"full"},
  {"request":"Fusionner et compresser les PDF.","expected":["merge","compress"],"mode":"full"},
- {"request":"Make the file lighter and archive it.","expected":["compress"],"mode":"full"}
+ {"request":"Make the file lighter and archive it.","expected":["compress"],"mode":"full"},
+ {"request":"Reverse the page order.","expected":["reverse_pages"],"mode":"shortlist"},
+ {"request":"Remove all annotations.","expected":["remove_annotations"],"mode":"shortlist"},
+ {"request":"Insert two blank pages after page 3.","expected":["add_blank_page"],"mode":"shortlist"}
 ]
