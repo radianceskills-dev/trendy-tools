@@ -68,6 +68,12 @@ async function configuredPage(browser, pageUrl, responseContent) {
   const context = await browser.newContext({
     viewport: { width: 1440, height: 900 },
   });
+  await context.route('**/*', async route => {
+    const url = new URL(route.request().url());
+    if (url.origin === new URL(pageUrl).origin) return route.continue();
+    // Page-level mock below handles the one authorized provider route. Never fall through externally.
+    return route.abort('blockedbyclient');
+  });
   const page = await context.newPage();
   let providerRequest;
 
@@ -132,6 +138,7 @@ async function configuredPage(browser, pageUrl, responseContent) {
       const context = await browser.newContext({
         viewport: { width: 1440, height: 900 },
       });
+      await context.route('**/*', route => new URL(route.request().url()).origin === `http://127.0.0.1:${port}` ? route.continue() : route.abort('blockedbyclient'));
       const page = await context.newPage();
       const response = await page.goto(
         `http://127.0.0.1:${port}/tools/bentopdf/`,
@@ -185,24 +192,13 @@ async function configuredPage(browser, pageUrl, responseContent) {
     }
 
     const validPlan = JSON.stringify({
-      version: 1,
+      version: 2,
       steps: [
-        { type: "MergeNode", controls: { retainPageLabels: false } },
-        {
-          type: "PageNumbersNode",
-          controls: {
-            position: "bottom-center",
-            fontSize: 12,
-            numberFormat: "page_x_of_y",
-            color: "#000000",
-          },
-        },
-        {
-          type: "CompressNode",
-          controls: { algorithm: "condense", compressionLevel: "balanced" },
-        },
+        { operation: 'merge', parameters: { retainPageLabels: false } },
+        { operation: 'page_numbers', parameters: { position: 'bottom-center', fontSize: 12, numberFormat: 'page_x_of_y', color: '#000000' } },
+        { operation: 'compress', parameters: { algorithm: 'condense', compressionLevel: 'balanced' } },
       ],
-      download: { filename: "final-report.pdf" },
+      filename: 'final-report.pdf', unhandled: [],
     });
 
     {
@@ -222,6 +218,9 @@ async function configuredPage(browser, pageUrl, responseContent) {
           "Merge my PDFs, add page numbers at the bottom center, compress them, and download as final-report.pdf.",
         );
       await page.locator("#trendy-ai-workflow-create").click();
+      await page.locator('#trendy-review-confirm').check();
+      assert.equal(await page.locator('#node-count').textContent(), '0 nodes');
+      await page.locator('#trendy-ai-workflow-apply').click();
       await page.waitForFunction(
         () => document.querySelector("#node-count")?.textContent === "5 nodes",
       );
@@ -243,11 +242,7 @@ async function configuredPage(browser, pageUrl, responseContent) {
       await context.close();
     }
 
-    const invalidRotationPlan = JSON.stringify({
-      version: 1,
-      steps: [{ type: "RotateNode", controls: { angle: 90 } }],
-      download: { filename: "fixed.pdf" },
-    });
+    const invalidRotationPlan = JSON.stringify({version: 2, steps: [{operation: 'rotate', parameters: {angle: 90}}], unhandled: []});
 
     {
       const { context, page } = await configuredPage(
@@ -260,16 +255,14 @@ async function configuredPage(browser, pageUrl, responseContent) {
         .locator("#trendy-ai-workflow-prompt")
         .fill("Fix the document orientation.");
       await page.locator("#trendy-ai-workflow-create").click();
-      await page.waitForFunction(
-        () =>
-          document.querySelector("#trendy-ai-workflow-status")?.dataset.type ===
-          "error",
-      );
-      assert.match(
-        (await page.locator("#trendy-ai-workflow-status").textContent()) || "",
-        /explicitly supplies/,
-      );
-      assert.equal(await page.locator("#node-count").textContent(), "0 nodes");
+      await page.locator('#trendy-choice-0-angle').waitFor({state:'visible'});
+      assert.equal(await page.locator('#node-count').textContent(), '0 nodes');
+      await page.locator('#trendy-choice-0-angle').selectOption('270');
+      await page.locator('#trendy-review-confirm').check();
+      await page.locator('#trendy-ai-workflow-apply').click();
+      await page.locator('#trendy-review-confirm').check();
+      await page.locator('#trendy-ai-workflow-apply').click();
+      await page.waitForFunction(() => document.querySelector('#node-count')?.textContent === '3 nodes');
       await context.close();
     }
 

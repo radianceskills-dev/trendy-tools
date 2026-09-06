@@ -61,3 +61,11 @@
     display: none;
   }
 }
+
+.trendy-ai-workflow-card { max-height: 90vh; overflow-y: auto; }
+#trendy-ai-workflow-review { color: #d1d5db; font-size: .8rem; border-top: 1px solid #4b5563; padding-top: 1rem; }
+#trendy-ai-workflow-review h3, #trendy-ai-workflow-review h4 { margin: .75rem 0 .25rem; font-weight: 600; }
+#trendy-ai-workflow-review pre { white-space: pre-wrap; overflow-wrap: anywhere; font-size: .7rem; background: #111827; padding: .5rem; }
+#trendy-ai-workflow-review label { display: block; margin: .75rem 0; }
+#trendy-ai-workflow-review input:not([type=checkbox]), #trendy-ai-workflow-review select { display: block; width: 100%; color: white; background: #111827; border: 1px solid #6b7280; border-radius: .25rem; padding: .5rem; }
+#trendy-ai-workflow-review .trendy-ai-warning { color: #fbbf24; margin: .5rem 0; }

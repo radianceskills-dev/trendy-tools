@@ -400,3 +400,243 @@ Allowed controls and value types:
 
 Before responding, verify that every key, node type, control, enum, boolean, number, page range, and filename follows this schema.`;
 }
+
+// Reviewed v2 metadata; all values below are AI-facing, before control conversion.
+const capabilities = {
+  "merge": {
+    "nodeType": "MergeNode",
+    "label": "Merge PDFs",
+    "required": [],
+    "defaults": {
+      "retainPageLabels": false
+    },
+    "warning": null,
+    "batch": "combine",
+    "input": "pdf",
+    "output": "pdf",
+    "enabled": true
+  },
+  "split": {
+    "nodeType": "SplitNode",
+    "label": "Select pages into one PDF per input",
+    "required": [
+      "pages"
+    ],
+    "defaults": {},
+    "warning": null,
+    "batch": "preserve",
+    "input": "pdf",
+    "output": "pdf",
+    "enabled": true
+  },
+  "rotate": {
+    "nodeType": "RotateNode",
+    "label": "Rotate all pages",
+    "required": [
+      "angle"
+    ],
+    "defaults": {},
+    "warning": "Rotation applies to every page.",
+    "batch": "preserve",
+    "input": "pdf",
+    "output": "pdf",
+    "enabled": true
+  },
+  "delete_pages": {
+    "nodeType": "DeletePagesNode",
+    "label": "Delete pages",
+    "required": [
+      "pages"
+    ],
+    "defaults": {},
+    "warning": "Selected pages will be removed. Ranges refer to this step after earlier operations.",
+    "batch": "preserve",
+    "input": "pdf",
+    "output": "pdf",
+    "enabled": true
+  },
+  "page_numbers": {
+    "nodeType": "PageNumbersNode",
+    "label": "Add page numbers",
+    "required": [],
+    "defaults": {
+      "position": "bottom-center",
+      "fontSize": 12,
+      "numberFormat": "simple",
+      "color": "#000000"
+    },
+    "warning": null,
+    "batch": "preserve",
+    "input": "pdf",
+    "output": "pdf",
+    "enabled": true
+  },
+  "watermark": {
+    "nodeType": "WatermarkNode",
+    "label": "Add watermark",
+    "required": [
+      "text"
+    ],
+    "defaults": {
+      "fontSize": 72,
+      "color": "#808080",
+      "opacity": 30,
+      "angle": -45,
+      "tile": false,
+      "tileGapX": 25,
+      "tileGapY": 75,
+      "pages": "all",
+      "flatten": false
+    },
+    "warning": null,
+    "batch": "preserve",
+    "input": "pdf",
+    "output": "pdf",
+    "enabled": true
+  },
+  "header_footer": {
+    "nodeType": "HeaderFooterNode",
+    "label": "Add header/footer",
+    "required": [],
+    "defaults": {
+      "headerLeft": "",
+      "headerCenter": "",
+      "headerRight": "",
+      "footerLeft": "",
+      "footerCenter": "",
+      "footerRight": "",
+      "fontSize": 10,
+      "color": "#000000"
+    },
+    "warning": null,
+    "batch": "preserve",
+    "input": "pdf",
+    "output": "pdf",
+    "enabled": true,
+    "atLeastOne": [
+      "headerLeft",
+      "headerCenter",
+      "headerRight",
+      "footerLeft",
+      "footerCenter",
+      "footerRight"
+    ]
+  },
+  "compress": {
+    "nodeType": "CompressNode",
+    "label": "Compress",
+    "required": [],
+    "defaults": {
+      "algorithm": "condense",
+      "compressionLevel": "balanced",
+      "imageQuality": 75,
+      "dpiTarget": 96,
+      "dpiThreshold": 150,
+      "removeMetadata": true,
+      "subsetFonts": true,
+      "convertToGrayscale": false,
+      "removeThumbnails": true
+    },
+    "warning": "Compression may reduce image quality. Output size is not guaranteed; defaults remove metadata and thumbnails.",
+    "batch": "preserve",
+    "input": "pdf",
+    "output": "pdf",
+    "enabled": true
+  },
+  "ocr": {
+    "nodeType": "OCRNode",
+    "label": "OCR searchable text layer",
+    "required": [],
+    "defaults": {
+      "language": "eng",
+      "resolution": "3.0",
+      "binarize": false,
+      "whitelist": ""
+    },
+    "warning": null,
+    "batch": "preserve",
+    "input": "pdf",
+    "output": "pdf",
+    "enabled": true
+  },
+  "encrypt": {
+    "nodeType": "EncryptNode",
+    "label": "Encrypt",
+    "required": [],
+    "defaults": {},
+    "warning": "Passwords stay in this tab and are omitted from saved/exported workflows.",
+    "batch": "preserve",
+    "input": "pdf",
+    "output": "pdf",
+    "enabled": true
+  },
+  "sanitize": {
+    "nodeType": "SanitizeNode",
+    "label": "Sanitize",
+    "required": [],
+    "defaults": {
+      "flattenForms": true,
+      "removeMetadata": true,
+      "removeAnnotations": true,
+      "removeJavascript": true,
+      "removeEmbeddedFiles": true,
+      "removeLayers": true,
+      "removeLinks": true,
+      "removeStructureTree": true,
+      "removeMarkInfo": true,
+      "removeFonts": false
+    },
+    "warning": "Enabled data types shown below will be removed. This is not content redaction.",
+    "batch": "preserve",
+    "input": "pdf",
+    "output": "pdf",
+    "enabled": true
+  },
+  "flatten": {
+    "nodeType": "FlattenNode",
+    "label": "Flatten",
+    "required": [],
+    "defaults": {},
+    "warning": "Forms and annotations will no longer be editable.",
+    "batch": "preserve",
+    "input": "pdf",
+    "output": "pdf",
+    "enabled": true
+  },
+  "edit_metadata": {
+    "nodeType": "EditMetadataNode",
+    "label": "Set nonempty metadata fields",
+    "required": [],
+    "defaults": {
+      "title": "",
+      "author": "",
+      "subject": "",
+      "keywords": "",
+      "creator": "",
+      "producer": ""
+    },
+    "warning": null,
+    "batch": "preserve",
+    "input": "pdf",
+    "output": "pdf",
+    "enabled": true,
+    "atLeastOne": [
+      "title",
+      "author",
+      "subject",
+      "keywords",
+      "creator",
+      "producer"
+    ]
+  }
+};
+const legacyPrompt = buildLegacySystemPrompt();
+for (const cap of Object.values(capabilities)) {
+  cap.aiKeys = cap.nodeType === 'EncryptNode' ? [] : [...CONTROL_KEYS[cap.nodeType]];
+  cap.promptControls = cap.nodeType === 'EncryptNode' ? 'none; password is collected locally' : legacyPrompt.split('\n').find(line => line.startsWith('- ' + cap.nodeType + ': '))?.split(': ').slice(1).join(': ') || 'none';
+}
+function deepFreeze(value) {
+  for (const item of Object.values(value)) if (item && typeof item === 'object') deepFreeze(item);
+  return Object.freeze(value);
+}
+export const CAPABILITIES = deepFreeze(capabilities);

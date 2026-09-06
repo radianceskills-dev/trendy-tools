@@ -14,13 +14,16 @@ function replaceOnce(source, from, to, file) {
   return source.replace(from, to);
 }
 
+for (const file of ["planner-v2.js", "safe-workflow.js"]) {
+  await copyFile(resolve(integrationRoot, file), resolve(sourceRoot, "src/js/workflow", file));
+}
 await copyFile(
   resolve(integrationRoot, "capability-registry.js"),
   resolve(sourceRoot, "src/js/workflow/capability-registry.js"),
 );
 await copyFile(
   resolve(integrationRoot, "workflow-plan.js"),
-  resolve(sourceRoot, "src/js/workflow/trendy-ai-plan.js"),
+  resolve(sourceRoot, "src/js/workflow/workflow-plan.js"),
 );
 await copyFile(
   resolve(integrationRoot, "trendy-workflow-ai.ts"),
@@ -38,7 +41,20 @@ const serializationPath = resolve(
 let serialization = await readFile(serializationPath, "utf8");
 const serializationAnchor =
   "const TEMPLATES_KEY = 'bento-pdf-workflow-templates';";
-const wrapper = `export async function loadSerializedWorkflow(\n  data: SerializedWorkflow,\n  editor: NodeEditor<ClassicScheme>,\n  area: AreaPlugin<ClassicScheme, AreaExtra>\n): Promise<void> {\n  await deserializeWorkflow(data, editor, area);\n}\n\n`;
+serialization = "import { replaceWorkflowSafely, isSensitiveControl } from './safe-workflow.js';\n" + serialization;
+serialization = replaceOnce(serialization, "if (control && 'value' in control) {\n        controls[key]", "if (control && 'value' in control && !isSensitiveControl(key)) {\n        controls[key]", "secret export");
+serialization = replaceOnce(serialization, "const control = node.controls[key];", "if (isSensitiveControl(key)) continue;\n      const control = node.controls[key];", "secret import");
+const wrapper = `export async function loadSerializedWorkflow(
+  data: SerializedWorkflow,
+  editor: NodeEditor<ClassicScheme>,
+  area: AreaPlugin<ClassicScheme, AreaExtra>
+): Promise<void> {
+  await replaceWorkflowSafely(data, editor, area, createNodeByType,
+    (source: ClassicScheme['Node'], output: string, target: ClassicScheme['Node'], input: string) => new ClassicPreset.Connection(source, output, target, input));
+}
+
+`;
+
 serialization = replaceOnce(
   serialization,
   serializationAnchor,
@@ -64,6 +80,7 @@ logic = replaceOnce(
   `${logicInitAnchor}\n\n  initializeTrendyWorkflowAI(workflowEditor);`,
   "src/js/logic/pdf-workflow-page.ts",
 );
+logic = replaceOnce(logic, "key === 'password' || key === 'ownerPassword'", "key === 'password' || key === 'ownerPassword' || key === 'userPassword'", "password mask");
 await writeFile(logicPath, logic);
 
 const toolbarButton = (

@@ -51,7 +51,7 @@
       placeholder="Example: Merge my PDFs, add page numbers at the bottom center, compress them, and download as final-report.pdf"
     ></textarea>
     <p class="text-[11px] text-gray-500 mt-1.5">
-      The description is sent to your configured provider. AI setup is stored
+      The description is sent to your configured provider. Do not include passwords, API keys, or confidential document content. PDF passwords are collected locally after generation. AI setup is stored
       under
       <code>trendytools.ai.v1</code>. Configure it on the
       <a href="/" class="text-violet-400 hover:text-violet-300">dashboard</a>.
@@ -64,7 +64,9 @@
       aria-live="polite"
     ></p>
 
+    <div id="trendy-ai-workflow-review" class="hidden"></div>
     <div class="flex justify-end gap-2 mt-3">
+      <button id="trendy-ai-workflow-apply" type="button" class="hidden bg-violet-600 text-white px-4 py-2 rounded-lg">Load reviewed workflow</button>
       <button
         type="button"
         data-trendy-ai-close
