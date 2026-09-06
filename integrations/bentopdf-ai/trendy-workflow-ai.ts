@@ -86,6 +86,8 @@ function providerError(payload: unknown, status: number): string {
     : `Provider request failed (${status}).`;
 }
 
+import { selectCapabilities, auditSelection } from "./capability-selection.js";
+import { WORKFLOW_TEMPLATES, getTemplatePlan } from "./workflow-templates.js";
 import { CAPABILITIES } from "./capability-registry.js";
 import { assertReplaceable } from "./safe-workflow.js";
 
@@ -99,12 +101,22 @@ export function initializeTrendyWorkflowAI(workflowEditor: WorkflowEditor): void
   const status = byId<HTMLParagraphElement>('trendy-ai-workflow-status');
   const review = byId<HTMLDivElement>('trendy-ai-workflow-review');
   const applyButton = byId<HTMLButtonElement>('trendy-ai-workflow-apply');
-  if (!openButton || !modal || !prompt || !createButton || !badge || !status || !review || !applyButton) return;
+  const templateSelect = byId<HTMLSelectElement>('trendy-workflow-template');
+  const templateButton = byId<HTMLButtonElement>('trendy-workflow-template-preview');
+  const fullCatalog = byId<HTMLInputElement>('trendy-ai-full-catalog');
+  const retryFull = byId<HTMLButtonElement>('trendy-ai-retry-full');
+  const selectionStatus = byId<HTMLParagraphElement>('trendy-ai-selection-status');
+  if (!openButton || !modal || !prompt || !createButton || !badge || !status || !review || !applyButton || !templateSelect || !templateButton || !fullCatalog || !retryFull || !selectionStatus) return;
   if (openButton.dataset.initialized === 'true') return;
   openButton.dataset.initialized = 'true';
   const languageCodes = new Set(getAvailableTesseractLanguageEntries().map(([code]) => code));
   let draft: ReturnType<typeof readPlanV2> | null = null;
   let confirmedRotations: number[] = [];
+  let activeSelection: ReturnType<typeof selectCapabilities> | null = null;
+  let planOrigin: 'ai' | 'template' = 'ai';
+  for (const template of WORKFLOW_TEMPLATES) {
+    const option = document.createElement('option'); option.value = template.id; option.textContent = template.label; templateSelect.appendChild(option);
+  }
   let epoch = 0, busy = false, applying = false;
   let previousFocus: HTMLElement | null = null;
   const inerted: HTMLElement[] = [];
@@ -116,9 +128,11 @@ export function initializeTrendyWorkflowAI(workflowEditor: WorkflowEditor): void
     badge!.dataset.ready = String(Boolean(settings));
     createButton!.disabled = busy || !settings || !prompt!.value.trim();
     createButton!.textContent = busy ? 'Creating…' : 'Create proposal';
-    if (!settings && !busy) setStatus('Configure an AI provider on the dashboard first.', 'warning');
+    templateButton!.disabled = busy || applying;
+    retryFull!.disabled = busy || applying;
+    if (!settings && !busy && !draft) setStatus('AI is not configured. Templates still work without a provider.', 'warning');
   }
-  function discardDraft() { draft = null; confirmedRotations = []; review!.replaceChildren(); review!.classList.add('hidden'); applyButton!.classList.add('hidden'); }
+  function discardDraft() { activeSelection = null; selectionStatus!.textContent = ''; retryFull!.classList.add('hidden'); draft = null; confirmedRotations = []; review!.replaceChildren(); review!.classList.add('hidden'); applyButton!.classList.add('hidden'); }
   function closeModal() {
     if (applying) return;
     epoch++; controller?.abort(); controller = undefined; busy = false;
@@ -134,6 +148,19 @@ export function initializeTrendyWorkflowAI(workflowEditor: WorkflowEditor): void
     if (!draft) return;
     const assessed = assessPlan(draft, { languageCodes, confirmedRotations });
     review!.replaceChildren(); review!.classList.remove('hidden');
+    applyButton!.classList.add('hidden'); retryFull!.classList.add('hidden');
+    const coverage = auditSelection(draft, activeSelection);
+    if (!coverage.ok) {
+      append(review!, 'h3', 'Proposal needs correction');
+      for (const id of coverage.missing) append(review!, 'p', `Likely requested operation omitted: ${CAPABILITIES[id as keyof typeof CAPABILITIES].label}`);
+      for (const id of coverage.outside) append(review!, 'p', `Operation needs full details: ${CAPABILITIES[id as keyof typeof CAPABILITIES].label}`);
+      for (const id of coverage.unexpected) append(review!, 'p', `Unexpected operation proposed: ${CAPABILITIES[id as keyof typeof CAPABILITIES].label}`);
+      append(review!, 'p', 'No workflow was loaded. Revise your description or explicitly retry with full capability details.');
+      if (activeSelection?.mode === 'shortlist') retryFull!.classList.remove('hidden');
+      setStatus('The proposal did not cover the selected capabilities. Nothing was loaded.', 'warning');
+      return;
+    }
+    if (planOrigin === 'template') append(review!, 'p', 'Reviewed local template. No prompt or file was sent to an AI provider.');
     append(review!, 'h3', 'Review the proposal');
     append(review!, 'p', 'Check every requested operation and its order. A valid plan can still misunderstand your description.');
     for (const [i, step] of assessed.steps.entries()) {
@@ -147,6 +174,7 @@ export function initializeTrendyWorkflowAI(workflowEditor: WorkflowEditor): void
     if (assessed.status === 'unsupported') {
       append(review!, 'p', 'Cannot load this proposal. Revise your description; no requested part will be silently discarded.');
       for (const item of assessed.plan.unhandled) append(review!, 'p', item);
+      if (activeSelection?.mode === 'shortlist') retryFull!.classList.remove('hidden');
       applyButton!.classList.add('hidden'); return;
     }
     for (const q of assessed.questions) {
@@ -193,14 +221,20 @@ export function initializeTrendyWorkflowAI(workflowEditor: WorkflowEditor): void
     const settings = readSettings(), request = prompt!.value.trim();
     if (!settings || !request) { updateState(); return; }
     try { guardPrompt(request); } catch (error) { setStatus((error as Error).message,'error'); return; }
-    discardDraft(); const ticket = ++epoch;
+    discardDraft(); planOrigin = 'ai';
+    activeSelection = selectCapabilities(request, { forceFull: fullCatalog!.checked });
+    selectionStatus!.textContent = activeSelection.mode === 'shortlist'
+      ? `${activeSelection.operationIds.length} of ${Object.keys(CAPABILITIES).length} capability details selected locally; all operation names remain visible to AI.`
+      : `Full capability details: ${activeSelection.reasons.join('; ')}.`;
+    const systemPrompt = buildPlanV2Prompt(activeSelection.operationIds);
+    const ticket = ++epoch;
     const currentController = new AbortController(); controller = currentController;
     busy = true; updateState(); setStatus('Creating a proposal…');
     const timer = setTimeout(() => currentController.abort(), 60000);
     try {
       const response = await fetch(PROVIDERS[settings.provider].endpoint, {
         method: 'POST', headers: { Authorization: `Bearer ${settings.apiKey}`, 'Content-Type': 'application/json' },
-        body: JSON.stringify({ model: settings.model, temperature: 0.1, messages: [{role:'system',content:buildPlanV2Prompt()},{role:'user',content:request}] }),
+        body: JSON.stringify({ model: settings.model, temperature: 0.1, messages: [{role:'system',content:systemPrompt},{role:'user',content:request}] }),
         signal: currentController.signal,
       });
       if (!response.ok) throw new Error(`Provider request failed (${response.status}). Check your model, credentials or rate limit.`);
@@ -219,6 +253,7 @@ export function initializeTrendyWorkflowAI(workflowEditor: WorkflowEditor): void
     if (!draft || busy || applying) return;
     if (!byId<HTMLInputElement>('trendy-review-confirm')?.checked) { setStatus('Confirm that you reviewed the proposal first.', 'warning'); return; }
     try {
+      if (!auditSelection(draft, activeSelection).ok) throw new Error('Resolve the capability coverage warning first.');
       const choices = Array.from(review!.querySelectorAll<HTMLInputElement | HTMLSelectElement>('[data-step]'));
       if (choices.length) {
         const updated = readPlanV2(draft); const nextConfirmed = [...confirmedRotations];
@@ -246,7 +281,7 @@ export function initializeTrendyWorkflowAI(workflowEditor: WorkflowEditor): void
       await loadSerializedWorkflow(serialized, workflowEditor.editor, workflowEditor.area);
       workflowEditor.engine.reset();
       byId('settings-sidebar')?.classList.add('hidden');
-      const statusText = byId('status-text'); if (statusText) statusText.textContent = 'AI workflow created. Review it, upload PDFs, then press Run.';
+      const statusText = byId('status-text'); if (statusText) statusText.textContent = `${planOrigin === 'template' ? 'Template' : 'AI'} workflow created. Review it, upload PDFs, then press Run.`;
       applying = false; closeModal();
     } catch (error) { setStatus((error as Error).message,'error'); }
     finally { applying = false; applyButton!.disabled = false; updateState(); }
@@ -276,6 +311,14 @@ export function initializeTrendyWorkflowAI(workflowEditor: WorkflowEditor): void
     }
   });
   prompt.addEventListener('input', () => { epoch++; controller?.abort(); busy = false; discardDraft(); updateState(); });
+  templateButton.addEventListener('click', () => {
+    if (busy || applying) return;
+    epoch++; controller?.abort(); discardDraft(); planOrigin = 'template';
+    try { draft = readPlanV2(getTemplatePlan(templateSelect.value)); selectionStatus.textContent = 'Template mode — zero AI requests.'; renderReview(); }
+    catch (error) { discardDraft(); setStatus((error as Error).message, 'error'); }
+  });
+  fullCatalog.addEventListener('change', () => { epoch++; controller?.abort(); busy = false; discardDraft(); updateState(); });
+  retryFull.addEventListener('click', () => { fullCatalog.checked = true; void createProposal(); });
   createButton.addEventListener('click', () => void createProposal());
   applyButton.addEventListener('click', () => void applyProposal());
   window.addEventListener('storage', event => { if(event.key === STORAGE_KEY) { epoch++; controller?.abort(); busy=false; discardDraft(); updateState(); } });
