@@ -23,9 +23,18 @@ uses mocked AI responses.
 - 60-second generation timeout, cancellation/stale-response guards, modal focus management.
 - Original tests plus new planner/transaction tests pass (25 tests); adapted upstream typechecks.
 
-## Remaining before review readiness
-- Built-app browser verification, including persistence and all three mocked providers.
-- Review focused CI results and production workflow compatibility.
+## Checkpoint 3
+- Expanded browser suite covers all 13 processing constructors, all three mocked
+  providers, review/clarification, secret-free native persistence and error cases.
+- Full pinned-source production build passed in CI; local build exceeded sandbox
+  resources. Initial Plan v2 browser suite passed in CI.
+- Expanded tests corrected for native save-confirmation dismissal and translated
+  node labels (the actual English label is "Encrypt PDF", not "Encrypt").
+- The latest PR check is authoritative for the expanded browser-suite result.
+
+## Before merging
+- Confirm the latest CI check is green and review the UI changes.
+- No real-model accuracy or PDF-engine execution claims are made by this suite.
 
 ## Limits
 - Free-text secret detection is best-effort. Do not paste confidential content into prompts.

@@ -68,6 +68,7 @@ async function configuredPage(browser, pageUrl, responseContent, provider = "ope
   const context = await browser.newContext({
     viewport: { width: 1440, height: 900 },
     serviceWorkers: "block",
+    locale: "en-US",
   });
   await context.route('**/*', async route => {
     const url = new URL(route.request().url());
@@ -142,6 +143,7 @@ async function configuredPage(browser, pageUrl, responseContent, provider = "ope
       const context = await browser.newContext({
         viewport: { width: 1440, height: 900 },
     serviceWorkers: "block",
+    locale: "en-US",
       });
       await context.route('**/*', route => new URL(route.request().url()).origin === `http://127.0.0.1:${port}` ? route.continue() : route.abort('blockedbyclient'));
       const page = await context.newPage();
@@ -337,7 +339,8 @@ async function configuredPage(browser, pageUrl, responseContent, provider = "ope
       const [chooser] = await Promise.all([h.page.waitForEvent('filechooser'), h.page.locator('#import-btn').click()]);
       await chooser.setFiles({name:'legacy.json',mimeType:'application/json',buffer:Buffer.from(JSON.stringify(exportedData))});
       await h.page.waitForFunction(() => document.querySelector('#node-count')?.textContent === '3 nodes');
-      await h.page.locator('#rete-container').getByText('Encrypt',{exact:true}).click();
+      const encryptLabel = JSON.parse(fs.readFileSync(path.join(root,'.build-cache/bentopdf/public/locales/en/tools.json'),'utf8')).encryptPdf.name;
+      await h.page.locator('#rete-container').getByText(encryptLabel,{exact:true}).click();
       await h.page.locator('#settings-content input[type=password]').first().waitFor({state:'visible'});
       assert.equal(await h.page.locator('#settings-content input[type=password]').count(),2);
       for(const input of await h.page.locator('#settings-content input[type=password]').all()) assert.equal(await input.inputValue(),'');
