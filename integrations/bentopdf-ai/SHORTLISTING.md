@@ -3,7 +3,7 @@
 Foundation base: `ef8e4f059ff0b24de3c1782c9db6b469a718a933` (PR #1).
 
 ## Scope
-- Same 13 processing nodes. No PDF engine or new operation is introduced.
+- This shortlisting milestone introduced no PDF engine or node changes. Later node expansions are documented separately.
 - English operation/alias hints live in the frozen capability registry.
 - Clear requests get a subset of detailed parameter descriptions, while every
   enabled operation name remains in a compact catalog index.

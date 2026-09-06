@@ -35,6 +35,10 @@ jobs:
           set -euxo pipefail
           cd .build-cache/bentopdf
           npm install --legacy-peer-deps --no-audit --no-fund
+          mkdir -p src/tests
+          cp ../../integrations/bentopdf-ai/workflow-node-execution.test.ts src/tests/trendy-workflow-node-execution.test.ts
+          npx vitest run src/tests/trendy-workflow-node-execution.test.ts
+          rm src/tests/trendy-workflow-node-execution.test.ts
           node ../../scripts/adapt-bentopdf-ai.mjs . ../../integrations/bentopdf-ai
           node ../../scripts/adapt-bentopdf-home.mjs . ../../integrations/bentopdf-home
           BASE_URL=/tools/bentopdf npm run build

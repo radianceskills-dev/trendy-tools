@@ -24,7 +24,7 @@ uses mocked AI responses.
 - Original tests plus new planner/transaction tests pass (25 tests); adapted upstream typechecks.
 
 ## Checkpoint 3
-- Expanded browser suite covers all 13 processing constructors, all three mocked
+- At the foundation milestone, the expanded browser suite covered all 13 then-enabled processing constructors and all three mocked
   providers, review/clarification, secret-free native persistence and error cases.
 - Full pinned-source production build passed in CI; local build exceeded sandbox
   resources. Initial Plan v2 browser suite passed in CI.

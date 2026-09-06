@@ -24,7 +24,7 @@ test('negation fallback does not require a negated operation',()=>{
 });
 test('explicit full-details retry expands once, retaining positive omission checks',()=>{
   const selection=selectCapabilities('Merge and compress.',{forceFull:true});
-  assert.equal(selection.mode,'full');assert.equal(selection.operationIds.length,13);
+  assert.equal(selection.mode,'full');assert.equal(selection.operationIds.length,16);
   assert.deepEqual(selection.expectedOperations,['merge','compress']);
 });
 test('compact prompt includes every operation name, not every parameter schema',()=>{

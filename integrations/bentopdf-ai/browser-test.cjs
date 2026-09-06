@@ -288,6 +288,29 @@ async function configuredPage(browser, pageUrl, responseContent, provider = "ope
       await h.context.close();
     }
 
+    // String choices and conditional questions remain local and require explicit review at each stage.
+    {
+      const blankPlan = {version:2,unhandled:[],steps:[{operation:'add_blank_page',parameters:{}}]};
+      const h = await configuredPage(browser,pageUrl,JSON.stringify(blankPlan));
+      await h.page.locator('#trendy-ai-workflow-button').click();
+      await h.page.locator('#trendy-ai-workflow-prompt').fill('Insert blank pages.');
+      await h.page.locator('#trendy-ai-workflow-create').click();
+      await h.page.locator('#trendy-choice-0-blankPosition').waitFor({state:'visible'});
+      assert.deepEqual(await h.page.locator('#trendy-choice-0-blankPosition option').allTextContents(),['Choose…','start','end','after']);
+      await h.page.locator('#trendy-choice-0-blankPosition').selectOption('after');
+      await h.page.locator('#trendy-review-confirm').check();
+      await h.page.locator('#trendy-ai-workflow-apply').click();
+      await h.page.locator('#trendy-choice-0-afterPage').fill('2');
+      assert.equal(await h.page.locator('#trendy-choice-0-afterPage').getAttribute('type'),'number');
+      await h.page.locator('#trendy-review-confirm').check();
+      await h.page.locator('#trendy-ai-workflow-apply').click();
+      await h.page.locator('#trendy-review-confirm').check();
+      await h.page.locator('#trendy-ai-workflow-apply').click();
+      await h.page.waitForFunction(() => document.querySelector('#node-count')?.textContent === '3 nodes');
+      assert.equal(h.requestCount(),1);
+      await h.context.close();
+    }
+
     // Exercise every remaining processing node's actual constructor/controls, not its PDF engine.
     {
       const contractPlan = {version:2,unhandled:[],steps:[
@@ -298,19 +321,22 @@ async function configuredPage(browser, pageUrl, responseContent, provider = "ope
         {operation:'ocr',parameters:{language:'eng'}},
         {operation:'sanitize',parameters:{}},
         {operation:'flatten',parameters:{}},
+        {operation:'reverse_pages',parameters:{}},
+        {operation:'remove_annotations',parameters:{}},
+        {operation:'add_blank_page',parameters:{blankPosition:'after',afterPage:1,count:2}},
         {operation:'edit_metadata',parameters:{title:'Test'}},
         {operation:'encrypt',parameters:{}},
       ]};
       const h = await configuredPage(browser,pageUrl,JSON.stringify(contractPlan));
       await h.page.locator('#trendy-ai-workflow-button').click();
-      await h.page.locator('#trendy-ai-workflow-prompt').fill('Select pages, delete page 2, watermark, add header, OCR, sanitize, flatten, set metadata and encrypt.');
+      await h.page.locator('#trendy-ai-workflow-prompt').fill('Select pages, delete page 2, watermark, add header, OCR, sanitize, flatten, reverse pages, remove annotations, insert two blank pages after page 1, set metadata and encrypt.');
       await h.page.locator('#trendy-ai-workflow-create').click();
-      await h.page.locator('#trendy-secret-8-userPassword').fill('LOCAL_ONLY_TEST_PASSWORD');
-      await h.page.locator('#trendy-secret-8-ownerPassword').fill('LOCAL_ONLY_OWNER_PASSWORD');
-      assert.equal(await h.page.locator('#trendy-secret-8-userPassword').getAttribute('type'),'password');
+      await h.page.locator('#trendy-secret-11-userPassword').fill('LOCAL_ONLY_TEST_PASSWORD');
+      await h.page.locator('#trendy-secret-11-ownerPassword').fill('LOCAL_ONLY_OWNER_PASSWORD');
+      assert.equal(await h.page.locator('#trendy-secret-11-userPassword').getAttribute('type'),'password');
       await h.page.locator('#trendy-review-confirm').check();
       await h.page.locator('#trendy-ai-workflow-apply').click();
-      await h.page.waitForFunction(() => document.querySelector('#node-count')?.textContent === '11 nodes');
+      await h.page.waitForFunction(() => document.querySelector('#node-count')?.textContent === '14 nodes');
       assert.equal(h.requestCount(),1);
       assert.ok(!JSON.stringify(h.providerRequest()).includes('LOCAL_ONLY'));
       const downloadPromise = h.page.waitForEvent('download');
@@ -322,7 +348,7 @@ async function configuredPage(browser, pageUrl, responseContent, provider = "ope
       assert.ok(!exported.includes('ownerPassword'));
       const exportedData = JSON.parse(exported);
       assert.equal(exportedData.version,1);
-      assert.equal(exportedData.nodes.length,11);
+      assert.equal(exportedData.nodes.length,14);
       await h.page.locator('#save-btn').click();
       await h.page.locator('#save-template-name').fill('Secret-free test');
       await h.page.locator('#save-template-confirm').click();
@@ -460,7 +486,7 @@ async function configuredPage(browser, pageUrl, responseContent, provider = "ope
       await h.context.close();
     }
 
-    console.log("BentoPDF AI mocked browser tests passed: review, clarification, all 13 processing constructors, 3 providers, secret persistence, errors, offline mobile templates, explicit fallback, attached files");
+    console.log("BentoPDF AI mocked browser tests passed: review, clarification, all 16 processing constructors, 3 providers, secret persistence, errors, offline mobile templates, explicit fallback, attached files");
   } finally {
     await browser.close();
     await new Promise((resolve) => server.close(resolve));

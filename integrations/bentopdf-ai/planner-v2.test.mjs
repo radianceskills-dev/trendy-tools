@@ -3,7 +3,7 @@ import { test } from 'node:test';
 import { CAPABILITIES } from './capability-registry.js';
 import { assessPlan, compilePlanV2, buildPlanV2Prompt, guardPrompt } from './planner-v2.js';
 const plan = (operation, parameters = {}) => ({ version: 2, steps: [{ operation, parameters }], unhandled: [] });
-test('exactly 13 processing capabilities, deeply frozen', () => { assert.equal(Object.keys(CAPABILITIES).length, 13); assert.ok(Object.isFrozen(CAPABILITIES.compress.defaults)); });
+test('exactly 16 processing capabilities, deeply frozen', () => { assert.equal(Object.keys(CAPABILITIES).length, 16); assert.ok(Object.isFrozen(CAPABILITIES.compress.defaults)); });
 test('compile deterministic linear chain with application filename', () => { const w = compilePlanV2(plan('merge')); assert.deepEqual(w.nodes.map(n => n.type), ['PDFInputNode','MergeNode','DownloadNode']); assert.equal(w.nodes[2].controls.filename, 'output'); assert.equal(w.nodes[1].controls.retainPageLabels, 'false'); });
 test('missing destructive pages must be clarified, not default to page one', () => { assert.equal(assessPlan(plan('delete_pages')).status, 'needs_clarification'); assert.throws(() => compilePlanV2(plan('delete_pages')), /Resolve/); });
 test('missing watermark and split values are clarified', () => { for (const op of ['split','watermark']) assert.equal(assessPlan(plan(op)).status,'needs_clarification'); });
@@ -17,3 +17,18 @@ test('numeric/range/language/path bounds remain strict', () => { for(const p of 
 test('null is unresolved rather than silently defaulted', () => assert.equal(assessPlan(plan('compress',{imageQuality:null})).status,'needs_clarification'));
 test('header/footer does not silently insert page numbers', () => { const a=assessPlan(plan('header_footer',{headerLeft:'Report'})); assert.equal(a.steps[0].controls.footerCenter,''); assert.equal(assessPlan(plan('header_footer')).status,'needs_clarification'); });
 test('sanitization review exposes defaults and warning', () => { const a=assessPlan(plan('sanitize')); assert.equal(a.steps[0].controls.removeLinks,'true'); assert.ok(a.warnings.length); });
+
+test('new no-control nodes compile with reviewed warnings', () => {
+  for (const op of ['reverse_pages','remove_annotations']) {
+    const a=assessPlan(plan(op)); assert.equal(a.status,'ready'); assert.ok(a.warnings.length);
+    assert.equal(compilePlanV2(plan(op)).nodes[1].type,CAPABILITIES[op].nodeType);
+  }
+});
+test('blank pages require an explicit position and conditional page number', () => {
+  assert.equal(assessPlan(plan('add_blank_page')).status,'needs_clarification');
+  const after=assessPlan(plan('add_blank_page',{blankPosition:'after'}));
+  assert.equal(after.status,'needs_clarification'); assert.equal(after.questions[0].key,'afterPage');
+  const w=compilePlanV2(plan('add_blank_page',{blankPosition:'after',afterPage:2,count:3}));
+  assert.deepEqual(w.nodes[1].controls,{count:3,blankPosition:'after',afterPage:2});
+  for(const parameters of [{blankPosition:'middle'},{blankPosition:'end',count:0},{blankPosition:'after',afterPage:1.5}]) assert.throws(()=>assessPlan(plan('add_blank_page',parameters)));
+});

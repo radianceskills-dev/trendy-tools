@@ -182,20 +182,22 @@ export function initializeTrendyWorkflowAI(workflowEditor: WorkflowEditor): void
       label.textContent = q.label;
       const cap = CAPABILITIES[draft.steps[q.step].operation as keyof typeof CAPABILITIES];
       const fallback = (cap.defaults as Record<string, unknown>)[q.key];
+      const valueType = (cap as { valueTypes?: Record<string, 'string' | 'number' | 'boolean'> }).valueTypes?.[q.key];
       const field = q.choices ? document.createElement('select') : document.createElement('input');
       field.id = `trendy-choice-${q.step}-${q.key}`;
       if (q.choices) {
         const select = field as HTMLSelectElement;
+        const numericChoices = q.choices.every((value: unknown) => typeof value === 'number');
         const empty = document.createElement('option'); empty.value = ''; empty.textContent = 'Choose…'; select.appendChild(empty);
-        for (const value of q.choices) { const option = document.createElement('option'); option.value = String(value); option.textContent = `${value}° clockwise`; select.appendChild(option); }
+        for (const value of q.choices) { const option = document.createElement('option'); option.value = String(value); option.textContent = numericChoices ? `${value}° clockwise` : String(value); select.appendChild(option); }
       } else {
         const input = field as HTMLInputElement;
-        input.type = typeof fallback === 'number' ? 'number' : 'text';
+        input.type = valueType === 'number' || typeof fallback === 'number' ? 'number' : 'text';
         input.placeholder = typeof fallback === 'boolean' ? 'true or false' : q.key === 'pages' ? 'e.g. 2-5,8' : q.key;
         input.maxLength = 1000;
       }
       field.dataset.step = String(q.step); field.dataset.key = q.key;
-      field.dataset.kind = q.choices || typeof fallback === 'number' ? 'number' : typeof fallback === 'boolean' ? 'boolean' : 'string';
+      field.dataset.kind = q.choices ? (q.choices.every((value: unknown) => typeof value === 'number') ? 'number' : 'string') : valueType || (typeof fallback === 'number' ? 'number' : typeof fallback === 'boolean' ? 'boolean' : 'string');
       label.htmlFor = field.id; label.appendChild(field); review!.appendChild(label);
     }
     if (!assessed.questions.length) {
