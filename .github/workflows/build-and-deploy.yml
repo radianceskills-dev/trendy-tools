@@ -164,6 +164,7 @@ jobs:
       - name: Browser-test BentoPDF AI with a mocked provider response
         run: |
           git clone --depth 1 --branch v2.8.8 https://github.com/alam00000/bentopdf.git .build-cache/bentopdf
+          npm install --prefix .build-cache/bentopdf --legacy-peer-deps --no-audit --no-fund
           cp integrations/bentopdf-ai/browser-test.cjs .build-cache/bentopdf-browser-test/browser-test.cjs
           CHROME_BIN="$(command -v google-chrome || command -v google-chrome-stable || command -v chromium || command -v chromium-browser)"
           test -n "$CHROME_BIN"
