@@ -420,7 +420,9 @@ async function configuredPage(browser, pageUrl, responseContent, provider = "ope
       await context.route('**/*', route => {
         if(new URL(route.request().url()).origin===new URL(pageUrl).origin) return route.continue();
         const externalUrl = new URL(route.request().url());
-        if (externalUrl.hostname !== 'puter.com' && !externalUrl.hostname.endsWith('.puter.com')) unexpectedExternalUrls.push(route.request().url());
+        const isPuter = externalUrl.hostname === 'puter.com' || externalUrl.hostname.endsWith('.puter.com');
+        const isBentoMetadata = externalUrl.href === 'https://api.github.com/repos/alam00000/bentopdf';
+        if (!isPuter && !isBentoMetadata) unexpectedExternalUrls.push(route.request().url());
         return route.abort('blockedbyclient');
       });
       const page = await context.newPage();
