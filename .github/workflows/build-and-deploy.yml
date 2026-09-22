@@ -16,306 +16,159 @@ env:
   NODE_VERSION: '24'
 
 jobs:
-  build-and-deploy:
+  build-tool:
+    name: Build ${{ matrix.tool }}
     runs-on: ubuntu-latest
-    timeout-minutes: 45
+    timeout-minutes: 30
     permissions:
       contents: read
+    strategy:
+      fail-fast: false
+      matrix:
+        tool:
+          - it-tools
+          - bentopdf
+          - squoosh
+          - freecut
+          - omniclip
+          - d2-playground
+          - cyberchef
+          - minipaint
+          - jupyterlite
+          - decimen
+          - bolo
+          - excalidraw
+          - openqr
+          - keeweb
     steps:
       - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
       - uses: actions/setup-node@v4
         with:
           node-version: ${{ env.NODE_VERSION }}
+
+      - name: Use Node.js 22 for Excalidraw
+        if: matrix.tool == 'excalidraw'
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+
       - uses: actions/setup-python@v5
         with:
           python-version: '3.12'
+
       - name: Install build dependencies
         run: |
           npm install -g pnpm
           sudo apt-get update -qq
           sudo apt-get install -y unzip
-      - name: Build six direct static applications
-        run: |
-          set -euxo pipefail
-          mkdir -p .build-cache tools
 
-          # 1. IT-Tools — pinned tag; Vite output mounted below /tools/it-tools/.
-          git clone --depth 1 --branch v2024.10.22-7ca5933 https://github.com/CorentinTh/it-tools.git .build-cache/it-tools
-          (
-            cd .build-cache/it-tools
-            pnpm install --no-frozen-lockfile
-            sed -i 's/vite build/vite build --base=\/tools\/it-tools\//g' package.json
-            pnpm run build
-            mkdir -p ../../tools/it-tools
-            cp -r dist/. ../../tools/it-tools/
-          )
-
-          # 2. BentoPDF — pinned v2.8.8 build with its native BASE_URL support.
-          git clone --depth 1 --branch v2.8.8 https://github.com/alam00000/bentopdf.git .build-cache/bentopdf
-          (
-            cd .build-cache/bentopdf
-            # BentoPDF depends on install-time build hooks (including esbuild and OCR tooling).
-            # npm runs those hooks on the Linux CI runner; pnpm 10 blocks them by default.
-            npm install --legacy-peer-deps
-            mkdir -p src/tests
-            cp ../../integrations/bentopdf-ai/workflow-node-execution.test.ts src/tests/trendy-workflow-node-execution.test.ts
-            npx vitest run src/tests/trendy-workflow-node-execution.test.ts
-            rm src/tests/trendy-workflow-node-execution.test.ts
-            node ../../integrations/bentopdf-ai/workflow-plan.test.mjs
-            node ../../scripts/adapt-bentopdf-ai.mjs . ../../integrations/bentopdf-ai
-            node ../../scripts/adapt-bentopdf-home.mjs . ../../integrations/bentopdf-home
-            BASE_URL=/tools/bentopdf npm run build
-            mkdir -p ../../tools/bentopdf
-            cp -r dist/. ../../tools/bentopdf/
-          )
-
-          # 3. Squoosh — immutable upstream commit with static-path adapter.
-          git clone https://github.com/GoogleChromeLabs/squoosh.git .build-cache/squoosh
-          (
-            cd .build-cache/squoosh
-            git checkout e8d35e0fb66eb16eff6fe8fc773eabcbb7128de3
-            # Upstream emits root-relative assets. Patch its URL helper at build time so
-            # output is isolated under /tools/squoosh/ without modifying the pinned source.
-          python - <<'PY'
-          from pathlib import Path
-          p = Path('lib/entry-data-plugin.js')
-          s = p.read_text()
-          old = "return fileName.replace(/^static\\//, '/');"
-          new = "return fileName.replace(/^static\\//, (process.env.BASE_URL || '/').replace(/\\/?$/, '/'));"
-          if old not in s:
-              raise SystemExit('Squoosh URL helper signature changed')
-          p.write_text(s.replace(old, new, 1))
-          p = Path('src/static-build/index.tsx')
-          s = p.read_text()
-          s = s.replace("start_url: '/?utm_medium", "start_url: '/tools/squoosh/?utm_medium", 1)
-          s = s.replace("action: '/?utm_medium", "action: '/tools/squoosh/?utm_medium", 1)
-          p.write_text(s)
-          PY
-            npm install
-            BASE_URL=/tools/squoosh/ npm run build
-            mkdir -p ../../tools/squoosh
-            cp -r build/. ../../tools/squoosh/
-          )
-
-          # 4. FreeCut — immutable source commit with dedicated subpath/PWA adapter.
-          git clone https://github.com/walterlow/freecut.git .build-cache/freecut
-          (
-            cd .build-cache/freecut
-            git checkout 4d62e8082c5eb387a96275bcbd323d28f6e41a62
-            npm ci || npm install
-            node ../../scripts/adapt-freecut.mjs
-            npm run build
-            mkdir -p ../../tools/freecut
-            cp -r dist/. ../../tools/freecut/
-          )
-
-          # 5. Omniclip — immutable v1.1.3 source commit and Turtle import-map adapter.
-          git clone https://github.com/omni-media/omniclip.git .build-cache/omniclip
-          (
-            cd .build-cache/omniclip
-            git checkout cbe581a4a788d9982ffd4a10025c678f9e8707d6
-            # The upstream v1.1.3 lock omits cross-platform optional package metadata.
-            # Repair only the temporary checkout's lock graph, then install from that lock.
-            npm install --package-lock-only --ignore-scripts
-            npm ci
-            node ../../scripts/adapt-omniclip.mjs pre
-            npm run build-netlify
-            node ../../scripts/adapt-omniclip.mjs post
-            mkdir -p ../../tools/omniclip
-            cp -r x/. ../../tools/omniclip/
-          )
-
-          # 6. D2 Playground — immutable source with the official esbuild pipeline.
-          git clone https://github.com/d2lang/d2-playground.git .build-cache/d2-playground
-          (
-            cd .build-cache/d2-playground
-            git checkout 2a6cf2dd628ac05e12428c641d1863f629c3f7ef
-            git submodule update --init --recursive src/js/d2-vscode
-            yarn --cwd src/js install --frozen-lockfile
-            # Monaco resolves this URL against the document path. Upstream's ../ path
-            # escapes /tools/d2-playground/, so make it tool-root-relative before bundling.
-            sed -i 's|fetch("../js/vendor/onig.wasm")|fetch("./js/vendor/onig.wasm?v=2a6cf2d")|' src/js/monaco/index.ts
-            # Avoid the browser's implicit request for the site-root favicon.
-            sed -i 's|<title>D2 Playground</title>|<title>D2 Playground</title>\n    <link rel="icon" href="favicon.ico" />|' src/index.html
-            node ../../scripts/adapt-d2-ai.mjs . ../../integrations/d2-ai
-            mkdir -p ../../tools/d2-playground/build ../../tools/d2-playground/js
-            npx --yes esbuild@0.16.3 src/js/main.js --bundle --minify --define:ENV=\"PRODUCTION\" --loader:.js=jsx --loader:.ttf=base64 --outfile=../../tools/d2-playground/build/out.js
-            npx --yes esbuild@0.16.3 src/css/main.css --bundle --minify --loader:.svg=base64 --loader:.ttf=base64 --outfile=../../tools/d2-playground/build/style.css
-            cp src/index.html ../../tools/d2-playground/index.html
-            cp src/assets/favicon.ico ../../tools/d2-playground/
-            cp -R src/assets src/fonts ../../tools/d2-playground/
-            cp -R src/js/vendor src/js/snippets ../../tools/d2-playground/js/
-            for js in ../../tools/d2-playground/js/vendor/*.js ../../tools/d2-playground/js/snippets/*.js; do
-              npx --yes esbuild@0.16.3 "$js" --minify --outfile="$js" --allow-overwrite
-            done
-            # Remove the production analytics request; the editor itself remains fully local.
-            sed -i '/data-domain="play.d2lang.com"/d' ../../tools/d2-playground/index.html
-          )
-
-          # 7. CyberChef — official, pinned v11.3.0 release artifact.
-          mkdir -p .build-cache/cyberchef-release tools/cyberchef
-          curl -fsSL https://github.com/gchq/CyberChef/releases/download/v11.3.0/CyberChef_d24ba1afce2e3a080308b5df7db033332fe94a1a.zip -o .build-cache/cyberchef.zip
-          unzip -q .build-cache/cyberchef.zip -d .build-cache/cyberchef-release
-          CYBER_HTML="$(find .build-cache/cyberchef-release -type f -name '*.html' | head -n 1)"
-          test -n "$CYBER_HTML"
-          CYBER_DIR="$(dirname "$CYBER_HTML")"
-          cp -r "$CYBER_DIR"/. tools/cyberchef/
-          if [ "$(basename "$CYBER_HTML")" != "index.html" ]; then cp "$CYBER_HTML" tools/cyberchef/index.html; fi
-
-          # 3. miniPaint — package output plus the static HTML, styles and image tree it references.
-          git clone --depth 1 --branch v4.14.3 https://github.com/viliusle/miniPaint.git .build-cache/minipaint
-          (
-            cd .build-cache/minipaint
-            npm ci || npm install
-            npm run build
-            mkdir -p ../../tools/minipaint/src
-            cp index.html ../../tools/minipaint/
-            cp -r dist images src/css ../../tools/minipaint/src/../ 2>/dev/null || true
-            # Keep the source-relative CSS path expected by the upstream HTML.
-            mkdir -p ../../tools/minipaint/src
-            cp -r src/css ../../tools/minipaint/src/
-          )
-
-          # 4. JupyterLite — pinned Python distribution and a static Pyodide notebook site.
-          python -m pip install --disable-pip-version-check 'jupyterlite==0.8.2' 'jupyterlite-pyodide-kernel==0.8.3'
-          mkdir -p .build-cache/jupyterlite-content
-          jupyter lite build --output-dir tools/jupyterlite --contents .build-cache/jupyterlite-content --base-url /tools/jupyterlite/
-
-          # 5. Decimen — immutable source commit; Vite base path set for its tool route.
-          git clone https://github.com/aryanjsx/Decimen.git .build-cache/decimen
-          (
-            cd .build-cache/decimen
-            git checkout 435272313f9d477ccb765d4d372acd0102f49363
-            npm ci || npm install
-            sed -i 's/vite build/vite build --base=\/tools\/decimen\//g' package.json
-            npm run build
-            mkdir -p ../../tools/decimen
-            cp -r dist/. ../../tools/decimen/
-          )
-
-          # 6. Bolo — immutable source commit; upstream is a standalone HTML application.
-          git clone https://github.com/NakliTechie/bolo.git .build-cache/bolo
-          git -C .build-cache/bolo checkout 59661860639da3eb388d5bd6813e8fdd47ad31be
-          mkdir -p tools/bolo
-          cp .build-cache/bolo/index.html tools/bolo/index.html
-
-      - name: Use Node.js 22 for pinned Excalidraw v0.18.1
-        uses: actions/setup-node@v4
+      # The key is commit-specific so a changed tool can replace its previous
+      # output. The restore prefix lets unchanged tools reuse the last build.
+      - name: Restore previous tool output
+        id: tool-cache
+        uses: actions/cache/restore@v4
         with:
-          node-version: '22'
+          path: tools/${{ matrix.tool }}
+          key: tool-output-${{ matrix.tool }}-${{ github.sha }}
+          restore-keys: |
+            tool-output-${{ matrix.tool }}-
 
-      - name: Build Excalidraw v0.18.1
+      - name: Build tool when changed or not cached
+        id: build
+        shell: bash
+        env:
+          TOOL: ${{ matrix.tool }}
+          EVENT_NAME: ${{ github.event_name }}
+          BEFORE_SHA: ${{ github.event.before }}
+          CURRENT_SHA: ${{ github.sha }}
         run: |
-          set -euxo pipefail
-          git clone --depth 1 --branch v0.18.1 https://github.com/excalidraw/excalidraw.git .build-cache/excalidraw
-          (
-            cd .build-cache/excalidraw
-            yarn install --frozen-lockfile
-            node ../../scripts/adapt-excalidraw.mjs
-            VITE_APP_ENABLE_TRACKING=false VITE_APP_DISABLE_SENTRY=true yarn build:app:docker
-            mkdir -p ../../tools/excalidraw
-            cp -r excalidraw-app/build/. ../../tools/excalidraw/
-          )
+          set -euo pipefail
 
-      - name: Build OpenQR v1.0.0 and install KeeWeb v1.18.9 web release
+          tool_dir="tools/$TOOL"
+          should_build=false
+          if [[ "$EVENT_NAME" == "workflow_dispatch" || "$BEFORE_SHA" =~ ^0+$ || ! -f "$tool_dir/index.html" ]]; then
+            should_build=true
+          elif bash scripts/should-build-tool.sh "$TOOL" "$BEFORE_SHA" "$CURRENT_SHA"; then
+            should_build=true
+          fi
+
+          if [[ "$should_build" == true ]]; then
+            rm -rf "$tool_dir"
+            bash scripts/build-tool.sh "$TOOL"
+            echo "built=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "Using cached $TOOL output"
+            echo "built=false" >> "$GITHUB_OUTPUT"
+          fi
+
+          test -f "$tool_dir/index.html"
+
+      - name: Save rebuilt tool output
+        if: steps.build.outputs.built == 'true'
+        uses: actions/cache/save@v4
+        with:
+          path: tools/${{ matrix.tool }}
+          key: tool-output-${{ matrix.tool }}-${{ github.sha }}
+
+      - name: Upload tool output
+        uses: actions/upload-artifact@v4
+        with:
+          name: tool-${{ matrix.tool }}
+          path: tools/${{ matrix.tool }}
+          if-no-files-found: error
+          retention-days: 7
+
+  assemble-validate-deploy:
+    name: Assemble, validate, and deploy
+    needs: build-tool
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+
+      - name: Install browser-test dependencies
         run: |
-          set -euxo pipefail
+          mkdir -p .build-cache/bentopdf-browser-test
+          npm install --prefix .build-cache/bentopdf-browser-test --no-save playwright-core@1.55.0
 
-          # OpenQR — static Next.js export with a compile-time base path.
-          npm install -g pnpm@10.16.1
-          git clone --depth 1 --branch v1.0.0 https://github.com/open-qr/openqr.git .build-cache/openqr
-          (
-            cd .build-cache/openqr
-            cp ../../scripts/openqr.next.config.mjs next.config.mjs
-            node ../../scripts/adapt-openqr.mjs .
-            pnpm install --frozen-lockfile
-            pnpm build
-            test -d out
-            mkdir -p ../../tools/openqr
-            cp -r out/. ../../tools/openqr/
-          )
+      - name: Download tool outputs
+        uses: actions/download-artifact@v4
+        with:
+          pattern: tool-*
+          path: tools
+          merge-multiple: false
 
-          # KeeWeb — official self-hostable web release. No source build or desktop binaries.
-          mkdir -p .build-cache/keeweb-release tools/keeweb
-          curl -fsSL https://github.com/keeweb/keeweb/releases/download/v1.18.9/KeeWeb-1.18.9.html.zip -o .build-cache/keeweb.zip
-          unzip -q .build-cache/keeweb.zip -d .build-cache/keeweb-release
-          cp -r .build-cache/keeweb-release/. tools/keeweb/
+      - name: Flatten downloaded tool directories
+        shell: bash
+        run: |
+          set -euo pipefail
+          for tool in it-tools bentopdf squoosh freecut omniclip d2-playground cyberchef minipaint jupyterlite decimen bolo excalidraw openqr keeweb; do
+            if [[ -d "tools/tool-$tool" ]]; then
+              rm -rf "tools/$tool"
+              mv "tools/tool-$tool" "tools/$tool"
+            fi
+          done
 
       - name: Validate deployment artifacts
-        run: |
-          set -euxo pipefail
-          for tool in it-tools bentopdf squoosh freecut omniclip d2-playground cyberchef minipaint jupyterlite decimen bolo excalidraw openqr keeweb; do
-            test -f "tools/$tool/index.html"
-          done
-          grep -q '/tools/it-tools/' tools/it-tools/index.html
-          grep -q '/tools/bentopdf/' tools/bentopdf/index.html
-          grep -q 'id="trendy-bentopdf-workflow-first"' tools/bentopdf/index.html
-          grep -q 'AI-powered' tools/bentopdf/index.html
-          grep -q 'All PDF tools' tools/bentopdf/index.html
-          ! grep -q 'id="donation-ribbon"' tools/bentopdf/index.html
-          ! grep -q 'id="features-section"' tools/bentopdf/index.html
-          ! grep -q 'id="security-compliance-section"' tools/bentopdf/index.html
-          ! grep -q 'id="faq-accordion"' tools/bentopdf/index.html
-          ! grep -q 'id="testimonials-section"' tools/bentopdf/index.html
-          test -f tools/bentopdf/pdf-workflow.html
-          grep -q 'id="trendy-ai-workflow-button"' tools/bentopdf/pdf-workflow.html
-          grep -q 'id="trendy-ai-workflow-modal"' tools/bentopdf/pdf-workflow.html
-          grep -Rq 'trendytools.ai.v1' tools/bentopdf/assets
-          grep -Rq 'openrouter.ai/api/v1/chat/completions' tools/bentopdf/assets
-          grep -Rq 'api.b.ai/v1/chat/completions' tools/bentopdf/assets
-          grep -Rq 'opencode.ai/zen/v1/chat/completions' tools/bentopdf/assets
-          grep -Rq 'RotateNode may only be used' tools/bentopdf/assets
-          grep -q '/tools/squoosh/' tools/squoosh/index.html
-          grep -q '/tools/freecut/' tools/freecut/index.html
-          test -f tools/freecut/sw.js
-          grep -q '"/tools/omniclip/vendor/sparrow-rtc/"' tools/omniclip/importmap.json
-          grep -q '/tools/omniclip/vendor/sparrow-rtc/vendor/@benev/slate/' tools/omniclip/importmap.json
-          test -f tools/omniclip/vendor/@benev/slate/x/index.js
-          test -f tools/omniclip/vendor/sparrow-rtc/vendor/@benev/slate/x/tools/data/hex.js
-          test -f tools/omniclip/coi-serviceworker.js
-          test -f tools/d2-playground/build/out.js
-          test -f tools/d2-playground/build/style.css
-          test -f tools/d2-playground/build/out.css
-          grep -q './js/vendor/onig.wasm?v=2a6cf2d' tools/d2-playground/build/out.js
-          ! grep -q '../js/vendor/onig.wasm' tools/d2-playground/build/out.js
-          test -f tools/d2-playground/js/vendor/onig.wasm
-          grep -q 'id="ai-create-panel"' tools/d2-playground/index.html
-          grep -q 'trendytools.ai.v1' tools/d2-playground/build/out.js
-          grep -q 'openrouter.ai/api/v1/chat/completions' tools/d2-playground/build/out.js
-          grep -q 'api.b.ai/v1/chat/completions' tools/d2-playground/build/out.js
-          grep -q 'opencode.ai/zen/v1/chat/completions' tools/d2-playground/build/out.js
-          grep -q '#ai-create-panel' tools/d2-playground/build/style.css
-          ! grep -q 'data-domain="play.d2lang.com"' tools/d2-playground/index.html
-          grep -q '/tools/decimen/' tools/decimen/index.html
-          test -f tools/cyberchef/assets/main.js
-          test -f tools/minipaint/dist/bundle.js
-          grep -q '/tools/excalidraw/' tools/excalidraw/index.html
-          test -f tools/excalidraw/manifest.webmanifest
-          grep -q '/tools/openqr/_next/' tools/openqr/index.html
-          for asset in openqr-logo-stacked.svg openqr-logo-stacked-dark.svg favicon.svg favicon.ico apple-touch-icon.png; do
-            test -f "tools/openqr/$asset"
-          done
-          grep -q '/tools/openqr/openqr-logo-stacked.svg' tools/openqr/index.html
-          grep -q '/tools/openqr/openqr-logo-stacked-dark.svg' tools/openqr/index.html
-          grep -q '/tools/openqr/favicon.svg' tools/openqr/index.html
-          grep -q '/tools/openqr/favicon.ico' tools/openqr/index.html
-          grep -q '/tools/openqr/apple-touch-icon.png' tools/openqr/index.html
-          ! grep -q 'src="/openqr-logo-stacked' tools/openqr/index.html
-          ! grep -q 'href="/favicon' tools/openqr/index.html
-          ! grep -q 'href="/apple-touch-icon' tools/openqr/index.html
-          test -f tools/keeweb/service-worker.js
-          grep -q '1.18.9' tools/keeweb/service-worker.js
+        run: bash scripts/validate-build.sh
 
       - name: Browser-test BentoPDF AI with a mocked provider response
         run: |
-          set -euxo pipefail
-          TEST_DIR="$PWD/.build-cache/bentopdf-browser-test"
-          mkdir -p "$TEST_DIR"
-          npm install --prefix "$TEST_DIR" --no-save playwright-core@1.55.0
-          cp integrations/bentopdf-ai/browser-test.cjs "$TEST_DIR/browser-test.cjs"
+          git clone --depth 1 --branch v2.8.8 https://github.com/alam00000/bentopdf.git .build-cache/bentopdf
+          npm install --prefix .build-cache/bentopdf --legacy-peer-deps --no-audit --no-fund
+          cp integrations/bentopdf-ai/browser-test.cjs .build-cache/bentopdf-browser-test/browser-test.cjs
           CHROME_BIN="$(command -v google-chrome || command -v google-chrome-stable || command -v chromium || command -v chromium-browser)"
           test -n "$CHROME_BIN"
-          node "$TEST_DIR/browser-test.cjs" "$PWD" "$CHROME_BIN"
+          node .build-cache/bentopdf-browser-test/browser-test.cjs "$PWD" "$CHROME_BIN"
 
       - name: Deploy only a complete validated batch
         uses: nwtgck/actions-netlify@v3
