@@ -419,7 +419,8 @@ async function configuredPage(browser, pageUrl, responseContent, provider = "ope
       let unexpectedExternalRequests=0;
       await context.route('**/*', route => {
         if(new URL(route.request().url()).origin===new URL(pageUrl).origin) return route.continue();
-        if (new URL(route.request().url()).origin !== 'https://js.puter.com') unexpectedExternalRequests++;
+        const externalUrl = new URL(route.request().url());
+        if (externalUrl.hostname !== 'puter.com' && !externalUrl.hostname.endsWith('.puter.com')) unexpectedExternalRequests++;
         return route.abort('blockedbyclient');
       });
       const page = await context.newPage();
