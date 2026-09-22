@@ -21,7 +21,8 @@ grep -q 'id="trendy-ai-workflow-modal"' tools/bentopdf/pdf-workflow.html
 grep -Rq 'trendytools.ai.v1' tools/bentopdf/assets
 grep -Rq 'openrouter.ai/api/v1/chat/completions' tools/bentopdf/assets
 grep -Rq 'api.b.ai/v1/chat/completions' tools/bentopdf/assets
-grep -Rq 'opencode.ai/zen/v1/chat/completions' tools/bentopdf/assets
+grep -Rq 'settings.endpoint' tools/bentopdf/assets
+grep -Rq 'puter.ai.chat' tools/bentopdf/assets
 grep -Rq 'RotateNode may only be used' tools/bentopdf/assets
 grep -q '/tools/squoosh/' tools/squoosh/index.html
 grep -q '/tools/freecut/' tools/freecut/index.html
@@ -41,7 +42,8 @@ grep -q 'id="ai-create-panel"' tools/d2-playground/index.html
 grep -q 'trendytools.ai.v1' tools/d2-playground/build/out.js
 grep -q 'openrouter.ai/api/v1/chat/completions' tools/d2-playground/build/out.js
 grep -q 'api.b.ai/v1/chat/completions' tools/d2-playground/build/out.js
-grep -q 'opencode.ai/zen/v1/chat/completions' tools/d2-playground/build/out.js
+grep -q 'settings.endpoint' tools/d2-playground/build/out.js
+grep -q 'puter.ai.chat' tools/d2-playground/build/out.js
 grep -q '#ai-create-panel' tools/d2-playground/build/style.css
 ! grep -q 'data-domain="play.d2lang.com"' tools/d2-playground/index.html
 grep -q '/tools/decimen/' tools/decimen/index.html

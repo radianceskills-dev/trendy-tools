@@ -46,7 +46,7 @@ const server = http.createServer((request, response) => {
   ) {
     response.setHeader(
       "Content-Security-Policy",
-      "connect-src 'self' https://openrouter.ai https://api.b.ai https://opencode.ai",
+      "connect-src 'self' https:",
     );
   }
   response.setHeader(
@@ -80,37 +80,46 @@ async function configuredPage(browser, pageUrl, responseContent, provider = "ope
   let providerRequest;
   let requestCount = 0;
   const requests = [];
-  const endpoints = {openrouter:"https://openrouter.ai/api/v1/chat/completions",bai:"https://api.b.ai/v1/chat/completions",opencode:"https://opencode.ai/zen/v1/chat/completions"};
+  const endpoints = {openrouter:"https://openrouter.ai/api/v1/chat/completions",bai:"https://api.b.ai/v1/chat/completions",custom:"https://custom.example.test/v1/chat/completions"};
 
-  await page.addInitScript((providerId) => {
+  await page.addInitScript(({ providerId, endpoints, responseContent }) => {
+    if (providerId === "puter") {
+      window.puter = {
+        auth: { signIn: async () => ({}) },
+        ai: { chat: async () => ({ message: { content: responseContent } }) },
+      };
+    }
     localStorage.setItem(
       "trendytools.ai.v1",
-      JSON.stringify({
+    JSON.stringify({
         version: 1,
         provider: providerId,
-        providerLabel: "OpenRouter",
+        transport: providerId === "puter" ? "puter" : "openai",
+        providerLabel: providerId === "custom" ? "Custom provider" : providerId === "bai" ? "B.AI" : "OpenRouter",
         apiKey: "mock-key",
         model: "mock-model",
-        endpoint: "https://untrusted.example.invalid/chat/completions",
+        endpoint: providerId === "custom" ? endpoints.custom : "https://untrusted.example.invalid/chat/completions",
       }),
     );
-  }, provider);
+  }, { providerId: provider, endpoints, responseContent: typeof responseContent === "string" ? responseContent : "" });
 
-  await page.route(
-    endpoints[provider],
-    async (route) => {
-      requestCount++;
-      providerRequest = route.request().postDataJSON();
-      requests.push(providerRequest);
-      await route.fulfill({
-        status: httpStatus,
-        contentType: "application/json",
-        body: JSON.stringify({
-          choices: [{ message: { content: typeof responseContent === 'function' ? responseContent(requestCount) : responseContent } }],
-        }),
-      });
-    },
-  );
+  if (endpoints[provider]) {
+    await page.route(
+      endpoints[provider],
+      async (route) => {
+        requestCount++;
+        providerRequest = route.request().postDataJSON();
+        requests.push(providerRequest);
+        await route.fulfill({
+          status: httpStatus,
+          contentType: "application/json",
+          body: JSON.stringify({
+            choices: [{ message: { content: typeof responseContent === 'function' ? responseContent(requestCount) : responseContent } }],
+          }),
+        });
+      },
+    );
+  }
 
   const response = await page.goto(pageUrl, {
     waitUntil: "domcontentloaded",
@@ -275,8 +284,8 @@ async function configuredPage(browser, pageUrl, responseContent, provider = "ope
       await context.close();
     }
 
-    // The other providers use only their fixed, mocked endpoints.
-    for (const provider of ['bai','opencode']) {
+    // Preset providers stay fixed, while custom uses the saved endpoint.
+    for (const provider of ['bai','custom','puter']) {
       const h = await configuredPage(browser,pageUrl,validPlan,provider);
       await h.page.locator('#trendy-ai-workflow-button').click();
       await h.page.locator('#trendy-ai-workflow-prompt').fill('Merge PDFs, add page numbers and compress.');
@@ -284,7 +293,7 @@ async function configuredPage(browser, pageUrl, responseContent, provider = "ope
       await h.page.locator('#trendy-review-confirm').check();
       await h.page.locator('#trendy-ai-workflow-apply').click();
       await h.page.waitForFunction(() => document.querySelector('#node-count')?.textContent === '5 nodes');
-      assert.equal(h.requestCount(),1);
+      assert.equal(h.requestCount(),provider === 'puter' ? 0 : 1);
       await h.context.close();
     }
 

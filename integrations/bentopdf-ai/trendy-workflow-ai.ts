@@ -21,15 +21,14 @@ const PROVIDERS = {
     label: "B.AI",
     endpoint: "https://api.b.ai/v1/chat/completions",
   },
-  opencode: {
-    label: "OpenCode Zen",
-    endpoint: "https://opencode.ai/zen/v1/chat/completions",
-  },
 } as const;
 
-type ProviderId = keyof typeof PROVIDERS;
+type ProviderId = keyof typeof PROVIDERS | "custom" | "puter";
 interface AISettings {
   provider: ProviderId;
+  transport?: "openai" | "puter";
+  providerLabel: string;
+  endpoint: string;
   apiKey: string;
   model: string;
 }
@@ -41,12 +40,24 @@ function readSettings(): AISettings | null {
     const value = JSON.parse(
       localStorage.getItem(STORAGE_KEY) || "null",
     ) as Partial<AISettings> | null;
-    if (!value || !value.provider || !(value.provider in PROVIDERS))
-      return null;
+    if (value?.transport === "puter" && value.provider === "puter") {
+      return { provider: "puter", transport: "puter", providerLabel: "Puter", endpoint: "", apiKey: "", model: value.model || "gpt-5-nano" };
+    }
+    if ((value as { provider?: string })?.provider === "opencode") {
+      value.provider = "custom";
+      value.providerLabel = "Custom provider";
+      value.endpoint = "https://opencode.ai/zen/v1/chat/completions";
+    }
+    if (!value || !value.provider || (!(value.provider in PROVIDERS) && value.provider !== "custom")) return null;
     if (typeof value.apiKey !== "string" || !value.apiKey.trim()) return null;
     if (typeof value.model !== "string" || !value.model.trim()) return null;
+    const preset = PROVIDERS[value.provider as keyof typeof PROVIDERS];
+    const endpoint = preset?.endpoint || value.endpoint;
+    if (typeof endpoint !== "string" || !/^https:\/\//.test(endpoint)) return null;
     return {
       provider: value.provider,
+      providerLabel: preset?.label || value.providerLabel || "Custom provider",
+      endpoint,
       apiKey: value.apiKey.trim(),
       model: value.model.trim(),
     };
@@ -57,8 +68,8 @@ function readSettings(): AISettings | null {
 
 function extractContent(payload: unknown): string {
   const content = (
-    payload as { choices?: { message?: { content?: unknown } }[] }
-  )?.choices?.[0]?.message?.content;
+    payload as { choices?: { message?: { content?: unknown } }[]; message?: { content?: unknown } }
+  )?.choices?.[0]?.message?.content ?? (payload as { message?: { content?: unknown } })?.message?.content;
   if (typeof content === "string") return content;
   if (Array.isArray(content)) {
     return content
@@ -76,6 +87,18 @@ function extractContent(payload: unknown): string {
       .join("");
   }
   return "";
+}
+
+function loadPuter(): Promise<{ ai: { chat: (messages: unknown[], options: Record<string, unknown>) => Promise<unknown> } }> {
+  const scope = window as typeof window & { puter?: { ai: { chat: (messages: unknown[], options: Record<string, unknown>) => Promise<unknown> } } };
+  if (scope.puter) return Promise.resolve(scope.puter);
+  return new Promise((resolve, reject) => {
+    const script = document.createElement("script");
+    script.src = "https://js.puter.com/v2/";
+    script.onload = () => scope.puter ? resolve(scope.puter) : reject(new Error("Puter.js did not initialize."));
+    script.onerror = () => reject(new Error("Could not load Puter.js."));
+    document.head.appendChild(script);
+  });
 }
 
 function providerError(payload: unknown, status: number): string {
@@ -124,7 +147,7 @@ export function initializeTrendyWorkflowAI(workflowEditor: WorkflowEditor): void
   function setStatus(message: string, type = '') { status!.textContent = message; status!.dataset.type = type; }
   function updateState() {
     const settings = readSettings();
-    badge!.textContent = settings ? PROVIDERS[settings.provider].label : 'Not configured';
+     badge!.textContent = settings ? settings.providerLabel : 'Not configured';
     badge!.dataset.ready = String(Boolean(settings));
     createButton!.disabled = busy || !settings || !prompt!.value.trim();
     createButton!.textContent = busy ? 'Creating…' : 'Create proposal';
@@ -234,13 +257,19 @@ export function initializeTrendyWorkflowAI(workflowEditor: WorkflowEditor): void
     busy = true; updateState(); setStatus('Creating a proposal…');
     const timer = setTimeout(() => currentController.abort(), 60000);
     try {
-      const response = await fetch(PROVIDERS[settings.provider].endpoint, {
-        method: 'POST', headers: { Authorization: `Bearer ${settings.apiKey}`, 'Content-Type': 'application/json' },
-        body: JSON.stringify({ model: settings.model, temperature: 0.1, messages: [{role:'system',content:systemPrompt},{role:'user',content:request}] }),
-        signal: currentController.signal,
-      });
-      if (!response.ok) throw new Error(`Provider request failed (${response.status}). Check your model, credentials or rate limit.`);
-      const payload: unknown = await response.json();
+      let payload: unknown;
+      if (settings.transport === 'puter') {
+        const puter = await loadPuter();
+        payload = await puter.ai.chat([{role:'system',content:systemPrompt},{role:'user',content:request}], { model: settings.model, temperature: 0.1, normalize: true });
+      } else {
+        const response = await fetch(settings.endpoint, {
+          method: 'POST', headers: { Authorization: `Bearer ${settings.apiKey}`, 'Content-Type': 'application/json' },
+          body: JSON.stringify({ model: settings.model, temperature: 0.1, messages: [{role:'system',content:systemPrompt},{role:'user',content:request}] }),
+          signal: currentController.signal,
+        });
+        if (!response.ok) throw new Error(`Provider request failed (${response.status}). Check your model, credentials or rate limit.`);
+        payload = await response.json();
+      }
       if (ticket !== epoch || currentController.signal.aborted) return;
       draft = readPlanV2(parseWorkflowPlanContent(extractContent(payload)));
       renderReview();

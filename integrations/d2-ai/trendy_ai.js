@@ -2,7 +2,6 @@ const STORAGE_KEY = "trendytools.ai.v1";
 const PROVIDERS = {
   openrouter: { label: "OpenRouter", endpoint: "https://openrouter.ai/api/v1/chat/completions" },
   bai: { label: "B.AI", endpoint: "https://api.b.ai/v1/chat/completions" },
-  opencode: { label: "OpenCode Zen", endpoint: "https://opencode.ai/zen/v1/chat/completions" },
 };
 
 const SYSTEM_PROMPT = `You create complete new diagrams using valid D2 source code. Return only D2 source: no Markdown fences, JSON, explanations, or introductory text.
@@ -92,22 +91,41 @@ let controller;
 function readSettings() {
   try {
     const value = JSON.parse(localStorage.getItem(STORAGE_KEY));
-    if (!value || !PROVIDERS[value.provider]) return null;
+    if (value?.transport === "puter" && value.provider === "puter") return { ...value, providerLabel: "Puter" };
+    if (value?.provider === "opencode") {
+      value.provider = "custom";
+      value.providerLabel = "Custom provider";
+      value.endpoint = "https://opencode.ai/zen/v1/chat/completions";
+    }
+    if (!value || (!PROVIDERS[value.provider] && value.provider !== "custom")) return null;
     if (typeof value.apiKey !== "string" || !value.apiKey.trim()) return null;
     if (typeof value.model !== "string" || !value.model.trim()) return null;
-    return value;
+    const endpoint = PROVIDERS[value.provider]?.endpoint || value.endpoint;
+    if (typeof endpoint !== "string" || !/^https:\/\//.test(endpoint)) return null;
+    return { ...value, endpoint, providerLabel: PROVIDERS[value.provider]?.label || value.providerLabel || "Custom provider" };
   } catch {
     return null;
   }
 }
 
 function extractContent(payload) {
-  const content = payload?.choices?.[0]?.message?.content;
+  const content = payload?.choices?.[0]?.message?.content ?? payload?.message?.content ?? payload;
   if (typeof content === "string") return content;
   if (Array.isArray(content)) {
     return content.map((part) => (typeof part === "string" ? part : part?.text || "")).join("");
   }
   return "";
+}
+
+function loadPuter() {
+  if (window.puter) return Promise.resolve(window.puter);
+  return new Promise((resolve, reject) => {
+    const script = document.createElement("script");
+    script.src = "https://js.puter.com/v2/";
+    script.onload = () => resolve(window.puter);
+    script.onerror = () => reject(new Error("Could not load Puter.js."));
+    document.head.appendChild(script);
+  });
 }
 
 function cleanD2Source(content) {
@@ -147,7 +165,7 @@ function init(Editor) {
   function updateState() {
     const settings = readSettings();
     const ready = Boolean(settings);
-    badge.textContent = ready ? PROVIDERS[settings.provider].label : "Not configured";
+    badge.textContent = ready ? settings.providerLabel : "Not configured";
     badge.dataset.ready = String(ready);
     generate.disabled = !ready || !prompt.value.trim();
     if (!ready) setStatus("Configure AI on the dashboard first.", "warning");
@@ -169,35 +187,41 @@ function init(Editor) {
     const current = Editor.getScript().trim();
     if (current && current !== "x -> y" && !confirm("Replace the current diagram with a new AI-generated diagram?")) return;
 
-    const provider = PROVIDERS[settings.provider];
     controller = new AbortController();
     setBusy(true);
-    setStatus(`Creating with ${provider.label}…`);
+    setStatus(`Creating with ${settings.providerLabel}…`);
 
     try {
-      const response = await fetch(provider.endpoint, {
-        method: "POST",
-        headers: { "Authorization": `Bearer ${settings.apiKey.trim()}`, "Content-Type": "application/json" },
-        body: JSON.stringify({
-          model: settings.model.trim(),
-          messages: [
-            { role: "system", content: SYSTEM_PROMPT },
-            { role: "user", content: request },
-          ],
-          temperature: 0.2,
-        }),
-        signal: controller.signal,
-      });
-
-      let payload = {};
-      try { payload = await response.json(); } catch {}
-      if (!response.ok) throw new Error(payload?.error?.message || `Provider request failed (${response.status}).`);
+      let payload;
+      if (settings.transport === "puter") {
+        const puter = await loadPuter();
+        payload = await puter.ai.chat([
+          { role: "system", content: SYSTEM_PROMPT },
+          { role: "user", content: request },
+        ], { model: settings.model || "gpt-5-nano", temperature: 0.2, normalize: true });
+      } else {
+        const response = await fetch(settings.endpoint, {
+          method: "POST",
+          headers: { "Authorization": `Bearer ${settings.apiKey.trim()}`, "Content-Type": "application/json" },
+          body: JSON.stringify({
+            model: settings.model.trim(),
+            messages: [
+              { role: "system", content: SYSTEM_PROMPT },
+              { role: "user", content: request },
+            ],
+            temperature: 0.2,
+          }),
+          signal: controller.signal,
+        });
+        try { payload = await response.json(); } catch { payload = {}; }
+        if (!response.ok) throw new Error(payload?.error?.message || `Provider request failed (${response.status}).`);
+      }
 
       const source = cleanD2Source(extractContent(payload));
       applySource(Editor, source);
       await Editor.compile();
       const hasErrors = document.getElementById("editor-errors").style.display !== "none";
-      setStatus(hasErrors ? "Created, but D2 found syntax errors." : `Created with ${provider.label}.`, hasErrors ? "error" : "success");
+      setStatus(hasErrors ? "Created, but D2 found syntax errors." : `Created with ${settings.providerLabel}.`, hasErrors ? "error" : "success");
     } catch (error) {
       if (error.name === "AbortError") setStatus("Generation cancelled.");
       else setStatus(error.message || "Could not create the diagram.", "error");
