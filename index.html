@@ -234,11 +234,6 @@
       background: hsl(var(--hue) 38% 88% / .68);
     }
     .tool-icon svg { width: 21px; height: 21px; }
-    .state { display: inline-flex; align-items: center; gap: 6px; padding: 4px 8px; border-radius: 999px; font-size: 10px; font-weight: 800; letter-spacing: .04em; text-transform: uppercase; }
-    .state.ready { color: #28795c; background: rgba(40, 121, 92, .09); }
-    .state.soon { color: #956220; background: rgba(167, 106, 34, .09); }
-    .state::before { content: ""; width: 5px; height: 5px; border-radius: 50%; background: currentColor; }
-
     .tool h2 { margin: 27px 0 4px; font-size: 19px; line-height: 1.2; letter-spacing: -.025em; }
     .category { color: hsl(var(--hue) 34% 38%); font-size: 10px; font-weight: 800; letter-spacing: .08em; text-transform: uppercase; }
     .description { margin: 12px 0 22px; color: var(--muted); font-size: 13px; line-height: 1.52; flex: 1; }
@@ -390,11 +385,6 @@
         <span class="brand-copy"><strong>Trendy Tools</strong><span>Private browser utilities</span></span>
       </a>
       <div class="top-meta">
-        <span class="chip"><span class="status-dot"></span><span id="ready-count">Ready</span></span>
-        <span class="chip">
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M12 3 4.5 6v5.2c0 4.7 3.2 8.7 7.5 9.8 4.3-1.1 7.5-5.1 7.5-9.8V6L12 3Z"/><path d="m9.3 12 1.8 1.8 3.8-4"/></svg>
-          Version-locked
-        </span>
         <button class="ai-trigger" id="ai-open" type="button" aria-haspopup="dialog" aria-controls="ai-dialog">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><path d="m12 3 1.5 4.5L18 9l-4.5 1.5L12 15l-1.5-4.5L6 9l4.5-1.5L12 3Z"/><path d="m19 15 .8 2.2L22 18l-2.2.8L19 21l-.8-2.2L16 18l2.2-.8L19 15Z"/></svg>
           <span id="ai-trigger-label">AI setup</span>
@@ -968,8 +958,6 @@
     const empty = document.querySelector('#empty');
     let filter = 'all';
 
-    document.querySelector('#ready-count').textContent = `${tools.filter(tool => tool.ready).length} ready`;
-
     function render() {
       const query = search.value.trim().toLowerCase();
       const visible = tools.filter(tool => {
@@ -981,7 +969,6 @@
        grid.innerHTML = visible.map((tool, index) => `${tool.ready ? `<a class="tool ${tool.ai ? 'ai-featured' : ''}" href="/tools/${tool.id}/" style="--hue:${tool.hue};--i:${index}" aria-label="Open ${tool.name}">` : `<article class="tool disabled" style="--hue:${tool.hue};--i:${index}">`}
            <div class="tool-top">
              <span class="tool-icon" aria-hidden="true">${icons[tool.icon]}</span>
-             <span class="state ${tool.ready ? 'ready' : 'soon'}">${tool.ready ? 'Ready' : 'Soon'}</span>
            </div>
            <h2>${tool.name}</h2>
            <span class="category">${tool.category}</span>
