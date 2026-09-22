@@ -312,6 +312,13 @@
     .icon-button svg { width: 17px; height: 17px; }
     .ai-note { display: flex; gap: 9px; margin: 20px 0; padding: 11px 12px; border: 1px solid rgba(243,189,99,.2); border-radius: 11px; color: #d7c396; background: rgba(243,189,99,.065); font-size: 12px; }
     .ai-note svg { width: 16px; height: 16px; flex: 0 0 16px; margin-top: 1px; color: var(--amber); }
+    .ai-tabs { display: grid; grid-template-columns: repeat(3, 1fr); gap: 4px; padding: 4px; margin-bottom: 18px; border: 1px solid var(--line); border-radius: 12px; background: rgba(13,19,34,.7); }
+    .ai-tab { min-height: 35px; border: 0; border-radius: 8px; color: var(--muted); background: transparent; cursor: pointer; font-size: 12px; font-weight: 750; }
+    .ai-tab.active { color: white; background: #26324e; }
+    .ai-provider-panel { display: grid; gap: 12px; }
+    .ai-auth-state { margin: 0; color: var(--muted); font-size: 13px; }
+    .ai-auth-models { display: grid; gap: 9px; padding-top: 6px; }
+    .ai-auth-models select { width: 100%; height: 43px; padding: 0 12px; border: 1px solid var(--line); border-radius: 10px; color: var(--text); background: #0b1120; }
     .ai-form { display: grid; gap: 15px; }
     .field { display: grid; gap: 7px; }
     .field-row { display: flex; align-items: center; justify-content: space-between; gap: 12px; }
@@ -454,11 +461,33 @@
         <span>Authentication stays in your browser. Manual keys are stored locally and should be rate-limited.</span>
       </div>
 
-      <div class="ai-options" aria-label="Choose AI setup method">
-        <button class="ai-option" id="ai-openrouter-auth" type="button"><strong>OpenRouter Auth</strong><span>Sign in with OpenRouter. A browser key is created automatically with PKCE.</span></button>
-        <button class="ai-option" id="ai-puter-auth" type="button"><strong>Puter Auth</strong><span>Sign in with Puter and use AI without creating or pasting an API key.</span></button>
-        <button class="ai-option" id="ai-custom-open" type="button"><strong>Custom</strong><span>Use OpenRouter, B.AI, or another OpenAI-compatible provider manually.</span></button>
+      <div class="ai-tabs" role="tablist" aria-label="AI provider">
+        <button class="ai-tab active" id="ai-tab-openrouter" type="button" role="tab" aria-selected="true" aria-controls="ai-panel-openrouter">OpenRouter</button>
+        <button class="ai-tab" id="ai-tab-puter" type="button" role="tab" aria-selected="false" aria-controls="ai-panel-puter">Puter</button>
+        <button class="ai-tab" id="ai-tab-custom" type="button" role="tab" aria-selected="false" aria-controls="ai-form">Custom</button>
       </div>
+
+      <section class="ai-provider-panel" id="ai-panel-openrouter" role="tabpanel" aria-labelledby="ai-tab-openrouter">
+        <p class="ai-auth-state" id="ai-openrouter-state">OpenRouter is not authenticated.</p>
+        <button class="btn btn-primary" id="ai-openrouter-auth" type="button">Authenticate</button>
+        <div class="ai-auth-models" id="ai-openrouter-models" hidden>
+          <div class="field-row"><label for="ai-openrouter-model">Model</label><span class="field-hint">Recommended: openrouter/free</span></div>
+          <input id="ai-openrouter-search" type="search" placeholder="Search OpenRouter models…" autocomplete="off">
+          <select id="ai-openrouter-model"></select>
+          <button class="btn btn-secondary" id="ai-openrouter-load" type="button">Reload models</button>
+        </div>
+      </section>
+
+      <section class="ai-provider-panel" id="ai-panel-puter" role="tabpanel" aria-labelledby="ai-tab-puter" hidden>
+        <p class="ai-auth-state" id="ai-puter-state">Puter is not authenticated.</p>
+        <button class="btn btn-primary" id="ai-puter-auth" type="button">Authenticate</button>
+        <div class="ai-auth-models" id="ai-puter-models" hidden>
+          <div class="field-row"><label for="ai-puter-model">Model</label><span class="field-hint">Choose a Puter model</span></div>
+          <input id="ai-puter-search" type="search" placeholder="Search Puter models…" autocomplete="off">
+          <select id="ai-puter-model"></select>
+          <button class="btn btn-secondary" id="ai-puter-load" type="button">Reload models</button>
+        </div>
+      </section>
 
       <form class="ai-form" id="ai-form" hidden>
         <div class="field">
@@ -597,9 +626,20 @@
       const closeButton = document.querySelector('#ai-close');
        const cancelButton = document.querySelector('#ai-cancel');
        const clearButton = document.querySelector('#ai-clear');
+       const tabs = [...document.querySelectorAll('.ai-tab')];
+       const panels = [...document.querySelectorAll('.ai-provider-panel')];
        const openRouterAuth = document.querySelector('#ai-openrouter-auth');
        const puterAuth = document.querySelector('#ai-puter-auth');
-       const customOpen = document.querySelector('#ai-custom-open');
+       const openRouterState = document.querySelector('#ai-openrouter-state');
+       const puterState = document.querySelector('#ai-puter-state');
+       const openRouterModels = document.querySelector('#ai-openrouter-models');
+       const puterModels = document.querySelector('#ai-puter-models');
+       const openRouterModel = document.querySelector('#ai-openrouter-model');
+       const puterModel = document.querySelector('#ai-puter-model');
+       const openRouterSearch = document.querySelector('#ai-openrouter-search');
+       const puterSearch = document.querySelector('#ai-puter-search');
+       const openRouterLoad = document.querySelector('#ai-openrouter-load');
+       const puterLoad = document.querySelector('#ai-puter-load');
       const providerInput = document.querySelector('#ai-provider');
       const keyInput = document.querySelector('#ai-key');
       const keyToggle = document.querySelector('#ai-key-toggle');
@@ -616,6 +656,81 @@
        const triggerLabel = document.querySelector('#ai-trigger-label');
        let lastProvider = providerInput.value;
        let availableModels = [];
+       const authModels = { openrouter: [], puter: [] };
+       let activeTab = 'openrouter';
+
+       function activateTab(name) {
+         activeTab = name;
+         tabs.forEach(tab => {
+           const active = tab.id === `ai-tab-${name}`;
+           tab.classList.toggle('active', active);
+           tab.setAttribute('aria-selected', String(active));
+         });
+         panels.forEach(panel => { panel.hidden = panel.id !== `ai-panel-${name}`; });
+         form.hidden = name !== 'custom';
+         if (name !== 'custom') updateAuthPanel(name);
+       }
+
+       function updateAuthPanel(name) {
+         const saved = readAISettings();
+         const isOpenRouter = name === 'openrouter';
+         const authenticated = saved?.transport === (isOpenRouter ? 'openai' : 'puter') && saved?.provider === (isOpenRouter ? 'openrouter' : 'puter');
+         const state = isOpenRouter ? openRouterState : puterState;
+         const auth = isOpenRouter ? openRouterAuth : puterAuth;
+         const modelsPanel = isOpenRouter ? openRouterModels : puterModels;
+         state.textContent = authenticated ? `${isOpenRouter ? 'OpenRouter' : 'Puter'} authenticated.` : `${isOpenRouter ? 'OpenRouter' : 'Puter'} is not authenticated.`;
+         auth.textContent = authenticated ? 'Re-authenticate' : 'Authenticate';
+         modelsPanel.hidden = !authenticated;
+         if (authenticated) {
+           const select = isOpenRouter ? openRouterModel : puterModel;
+           if (saved.model && ![...select.options].some(option => option.value === saved.model)) {
+             const option = document.createElement('option'); option.value = saved.model; option.textContent = saved.model; select.appendChild(option);
+           }
+           select.value = saved.model || '';
+         }
+       }
+
+       function renderAuthModels(name, models) {
+         authModels[name] = models;
+         const search = name === 'openrouter' ? openRouterSearch : puterSearch;
+         const select = name === 'openrouter' ? openRouterModel : puterModel;
+         const query = search.value.trim().toLowerCase();
+         select.replaceChildren(...models.filter(model => !query || model.toLowerCase().includes(query)).map(model => { const option = document.createElement('option'); option.value = model; option.textContent = model; return option; }));
+       }
+
+       async function loadAuthModels(name) {
+         const saved = readAISettings();
+         if (!saved) return;
+         const button = name === 'openrouter' ? openRouterLoad : puterLoad;
+         button.disabled = true;
+         try {
+           let models;
+           if (name === 'openrouter') {
+             const response = await fetch('https://openrouter.ai/api/v1/models/user', { headers: { Authorization: `Bearer ${saved.apiKey}` } });
+             const payload = await response.json();
+             if (!response.ok) throw new Error(payload?.error?.message || `Model loading failed (${response.status})`);
+             models = (payload.data || []).map(item => item.id).filter(Boolean);
+           } else {
+             const puter = await loadPuter();
+             models = (await puter.ai.listModels()).map(item => item.id).filter(Boolean);
+           }
+           renderAuthModels(name, [...new Set(models)].sort());
+         } catch (error) {
+           status.textContent = error.message || 'Could not load models.';
+           status.classList.add('error');
+         } finally { button.disabled = false; }
+       }
+
+       function saveAuthModel(name) {
+         const saved = readAISettings();
+         if (!saved) return;
+         const select = name === 'openrouter' ? openRouterModel : puterModel;
+         if (!select.value) return;
+         localStorage.setItem(AI_STORAGE_KEY, JSON.stringify({ ...saved, model: select.value, updatedAt: new Date().toISOString() }));
+         status.textContent = `${select.value} selected.`;
+         status.classList.remove('error');
+         updateTrigger();
+       }
 
        function providerLabel(settings) {
          return settings.provider === 'puter' ? 'Puter' : aiProviders[settings.provider]?.label || settings.providerLabel || 'Custom provider';
@@ -672,7 +787,9 @@
          status.textContent = '';
          status.classList.remove('error');
          form.hidden = true;
-      }
+         activateTab(saved?.provider === 'puter' ? 'puter' : 'openrouter');
+         if (saved?.provider === 'puter' || saved?.provider === 'openrouter') void loadAuthModels(saved.provider);
+       }
 
       openButton.addEventListener('click', () => {
         populate();
@@ -684,7 +801,7 @@
         if (event.target === dialog) dialog.close();
       });
        providerInput.addEventListener('change', () => applyProvider(providerInput.value, providerInput.value !== lastProvider));
-       customOpen.addEventListener('click', () => { form.hidden = false; status.textContent = ''; providerInput.focus(); });
+       tabs.forEach(tab => tab.addEventListener('click', () => activateTab(tab.id.replace('ai-tab-', ''))));
        openRouterAuth.addEventListener('click', () => { status.textContent = 'Opening OpenRouter…'; void startOpenRouterAuth(); });
        puterAuth.addEventListener('click', async () => {
          puterAuth.disabled = true;
@@ -696,11 +813,19 @@
            localStorage.setItem(AI_STORAGE_KEY, JSON.stringify({ version: 2, transport: 'puter', provider: 'puter', providerLabel: 'Puter', model: 'gpt-5-nano', updatedAt: new Date().toISOString() }));
            status.textContent = 'Puter AI enabled in this browser.';
            updateTrigger();
+           activateTab('puter');
+           void loadAuthModels('puter');
          } catch (error) {
            status.textContent = error?.message || 'Puter sign-in was not completed.';
            status.classList.add('error');
          } finally { puterAuth.disabled = false; }
        });
+       openRouterLoad.addEventListener('click', () => void loadAuthModels('openrouter'));
+       puterLoad.addEventListener('click', () => void loadAuthModels('puter'));
+       openRouterSearch.addEventListener('input', () => renderAuthModels('openrouter', authModels.openrouter));
+       puterSearch.addEventListener('input', () => renderAuthModels('puter', authModels.puter));
+       openRouterModel.addEventListener('change', () => saveAuthModel('openrouter'));
+       puterModel.addEventListener('change', () => saveAuthModel('puter'));
        customUrl.addEventListener('input', () => { if (providerInput.value === 'custom') endpoint.value = customUrl.value ? endpointFor(customUrl.value) : ''; });
        modelSearch.addEventListener('input', renderModels);
        loadModels.addEventListener('click', async () => {
@@ -791,6 +916,8 @@
         button.classList.add('configured');
         button.title = 'AI configured with OpenRouter';
         label.textContent = 'OpenRouter';
+        const dialog = document.querySelector('#ai-dialog');
+        if (dialog?.open) { activateTab('openrouter'); void loadAuthModels('openrouter'); }
       } catch (error) {
         status.textContent = error?.message || 'Could not finish OpenRouter authorization.';
         status.classList.add('error');
