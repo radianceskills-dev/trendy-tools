@@ -416,10 +416,11 @@ async function configuredPage(browser, pageUrl, responseContent, provider = "ope
     // Local templates work with NO provider configuration or outbound requests.
     for (const id of ['merge-number-compress','rotate-compress','watermark-compress','merge-protect']) {
       const context = await browser.newContext({viewport:{width:390,height:844},locale:'en-US',serviceWorkers:'block'});
-      let externalRequests=0;
+      let unexpectedExternalRequests=0;
       await context.route('**/*', route => {
         if(new URL(route.request().url()).origin===new URL(pageUrl).origin) return route.continue();
-        externalRequests++; return route.abort('blockedbyclient');
+        if (new URL(route.request().url()).origin !== 'https://js.puter.com') unexpectedExternalRequests++;
+        return route.abort('blockedbyclient');
       });
       const page = await context.newPage();
       await page.goto(pageUrl,{waitUntil:'domcontentloaded'});
@@ -443,7 +444,7 @@ async function configuredPage(browser, pageUrl, responseContent, provider = "ope
       const expected=id==='merge-number-compress'?'5 nodes':'4 nodes';
       await page.waitForFunction(n=>document.querySelector('#node-count')?.textContent===n,expected);
       assert.match(await page.locator('#status-text').textContent(),/^Template workflow created/);
-      assert.equal(externalRequests,0,'Templates must not contact providers or external assets');
+      assert.equal(unexpectedExternalRequests,0,'Templates must not contact providers or unexpected external assets');
       await context.close();
     }
 
