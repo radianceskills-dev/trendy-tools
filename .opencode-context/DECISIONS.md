@@ -144,6 +144,8 @@ Why:
 
 The chat keeps a compact index in context and appends focused details for up to four locally ranked tools based on the current user message. The catalog is data, not executable code, and is loaded from the same static origin.
 
+The system prompt explicitly tells smaller models to choose the best live tool, explain the match, include the direct link, avoid invented capabilities, ask a clarification question when needed, and say when no live tool fits. Local ranking expands common synonyms before selecting focused records.
+
 ## Netlify Remains The Runtime Host
 
 Decision: keep a single Netlify site and deploy the fully assembled repository root.

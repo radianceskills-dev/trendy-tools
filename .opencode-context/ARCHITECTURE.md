@@ -140,6 +140,7 @@ The Ask AI chat is intentionally implemented inside the standalone dashboard rat
 - The floating button is visible only when a valid shared AI setting exists.
 - Full chat history is stored in IndexedDB (`trendytools-chat`, `messages` store), not localStorage and not a server.
 - The active request uses a stable system prompt plus the newest messages that fit an estimated 3,000-token budget. Older history remains persisted but is omitted from the active request.
+- The stable system prompt explicitly instructs tool selection, capability grounding, direct linking, and no-fit/clarification behavior. A compact catalog index and up to four focused records are included before chat history and are included in the token-budget calculation.
 - OpenAI-compatible providers stream SSE `data:` chunks; Puter streams async iterable chunks. Both are normalized into incremental assistant text.
 - Markdown is rendered by a small dependency-free renderer with escaped text, limited Markdown constructs, and HTTPS-only external links.
 - The native dialog cancel event is prevented so only the explicit close button dismisses the chat.
