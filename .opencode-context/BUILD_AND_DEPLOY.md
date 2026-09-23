@@ -14,6 +14,7 @@ Use local development for dashboard work, adapter syntax, focused tests, and tar
 
 - Pushes to `main` when one of these paths changes:
   - `index.html`
+  - `ai-capabilities.json`
   - `tools-manifest.json`
   - `.github/workflows/build-and-deploy.yml`
   - `netlify.toml`
@@ -67,6 +68,8 @@ Manual dispatch always rebuilds every tool. A missing cached `index.html` also f
 Dashboard-only changes still execute all matrix jobs, but unchanged tools normally restore cached outputs rather than rebuilding on `main` push. A manual branch dispatch rebuilds all tools by design.
 
 The dashboard Ask AI chat is first-party inline dashboard code. It does not add a package dependency or a generated tool build. Changes to it still redeploy the complete site, but normally do not require rebuilding unchanged tool outputs on a normal `main` push.
+
+`ai-capabilities.json` is deployed as a root static asset and is a workflow trigger. Updating it redeploys the dashboard without requiring third-party tool bundle rebuilds on a normal `main` push.
 
 ## Artifact Assembly
 

@@ -50,6 +50,10 @@ Treat these as hard invariants unless the user explicitly changes the product ar
 - Do not reintroduce the Ready/Soon card pills or the ready-count/version-lock header pills without explicit user direction.
 - Preserve the light Arctic Frost direction: off-white and arctic-grey surfaces rather than stark white or the former dark theme.
 - Keep OpenRouter, Puter, and Custom as distinct AI setup tabs. Only the active tab's controls should be visible.
+- Maintain `ai-capabilities.json` as the single source of truth for live-tool capability context shown to dashboard Ask AI.
+- Only tools represented as live in `ai-capabilities.json` may be recommended by dashboard Ask AI. Do not add planned DuckDB-Wasm or WebLLM until their routes are implemented.
+- Preserve direct `/tools/<tool-id>/` links in capability records and focused AI context.
+- Keep catalog retrieval local and deterministic; do not add a backend or retrieval service for this catalog without an explicit architecture decision.
 - Show the dashboard `Ask AI` action only when a valid AI configuration exists.
 - Ask AI is dashboard-only for now; do not inject it into every tool.
 - Persist chat history in IndexedDB, not a server and not API-key storage.

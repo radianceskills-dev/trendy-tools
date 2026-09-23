@@ -41,6 +41,7 @@ Current dashboard behavior:
 - Card-level Ready/Soon pills and header ready-count/version-lock pills were intentionally removed.
 - Search and availability filters remain.
 - AI setup uses three tabs: OpenRouter, Puter, and Custom.
+- `ai-capabilities.json` is the single hand-maintained catalog for the 14 live tools. Ask AI loads it and uses it for local relevance selection and direct tool links.
 - When AI is configured, the dashboard shows an `Ask AI` floating action button.
 - Ask AI is a dashboard-only chat dialog with IndexedDB-persisted history, dependency-free Markdown rendering, OpenAI-compatible SSE streaming, and Puter async-iterable streaming.
 - Chat keeps full history locally but sends only a recent context window estimated at approximately 3,000 tokens.
@@ -93,5 +94,6 @@ D2 Playground receives an injected AI panel. The AI creates complete D2 source a
 - Implement and validate the WebLLM local-chat workspace.
 - Add focused dashboard browser tests, especially for tab visibility, OpenRouter callback state, and Puter model selection.
 - Add focused dashboard chat browser tests for IndexedDB persistence, context trimming, Markdown safety, streaming, and close behavior.
+- Keep the live capability catalog current when a tool's user-facing capabilities or route changes.
 - Clean up stale README and manifest `build` descriptions where they no longer match the actual scripts.
 - Consider removing obsolete dashboard CSS constants left behind by iterative redesign only when visual regression risk is controlled.

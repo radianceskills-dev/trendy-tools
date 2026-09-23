@@ -131,6 +131,19 @@ Implementation constraints:
 
 Rejected alternative: using a Markdown dependency such as `marked` plus `DOMPurify`. The user explicitly preferred a dependency-free dashboard.
 
+## Static Live Capability Catalog
+
+Decision: maintain one hand-authored `ai-capabilities.json` file containing only the 14 currently live tools.
+
+Why:
+
+- The catalog is small and expected to change infrequently.
+- One file is easier to review than distributed capability fragments.
+- Planned/unbuilt tools must not be recommended by Ask AI.
+- Local retrieval provides compact all-tool awareness plus focused details and direct links without a backend or vector database.
+
+The chat keeps a compact index in context and appends focused details for up to four locally ranked tools based on the current user message. The catalog is data, not executable code, and is loaded from the same static origin.
+
 ## Netlify Remains The Runtime Host
 
 Decision: keep a single Netlify site and deploy the fully assembled repository root.

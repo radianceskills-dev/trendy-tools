@@ -27,11 +27,14 @@ This boundary exists because the upstream projects use different frameworks, pac
 - Availability display.
 - Shared AI provider configuration.
 - Dashboard-only Ask AI chat, including IndexedDB history and browser-side streaming.
+- Local selection of relevant live-tool capability details from `ai-capabilities.json`.
 - The visual identity of Trendy Tools.
 
 It does not contain or proxy the third-party tools. Ready cards link directly to `/tools/<id>/`.
 
 The dashboard is intentionally plain HTML/CSS/JavaScript. Introducing a framework would add a build system for a page that currently deploys directly and would couple dashboard iteration to package management without a demonstrated need.
+
+`ai-capabilities.json` is a separate static data boundary rather than more inline dashboard prompt text. It lets the catalog be maintained as one reviewed file while the dashboard owns relevance ranking, context assembly, and direct links.
 
 ### Tool Build Boundary
 
