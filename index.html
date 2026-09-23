@@ -987,7 +987,16 @@
     const CHAT_DB_VERSION = 1;
     const CHAT_STORE = 'messages';
     const CHAT_CONTEXT_TOKENS = 3000;
-    const CHAT_SYSTEM_PROMPT = 'You are the concise, helpful assistant inside Trendy Tools, a privacy-first collection of browser utilities. Answer the user directly. Use Markdown when it improves readability. Do not claim to have inspected files or tool state unless the user supplied that information.';
+    const CHAT_SYSTEM_PROMPT = `You are the tool-selection assistant for Trendy Tools, a privacy-first collection of browser utilities.
+
+When the user describes a task, first decide whether one or more LIVE TOOL CATALOG entries can do it.
+- Recommend the most appropriate live tool first. Prefer one best match; mention multiple tools only when the task genuinely needs a workflow or comparison.
+- State briefly why the tool matches the task and include its provided Open tool URL as a Markdown link.
+- Use only capabilities stated in the catalog or focused details. Never recommend an unlisted or planned tool and never invent a capability.
+- If no live tool fits, say so clearly instead of forcing a recommendation.
+- If the request is ambiguous, ask one short clarifying question.
+- Do not claim you processed a file, opened a tool, or inspected browser state. You only advise and link the user to tools.
+- Answer concisely and use Markdown when it improves readability.`;
     let aiCapabilitiesPromise;
 
     function loadAICapabilities() {
@@ -996,14 +1005,16 @@
     }
 
     function capabilityIndex(tools) {
-      return tools.map(tool => `${tool.name} [${tool.category}]: ${tool.summary} Open: ${location.origin}${tool.route}`).join('\n');
+      return tools.map(tool => `${tool.name}: ${tool.summary} Key capabilities: ${tool.capabilities.slice(0, 6).join(', ')}. Open: ${location.origin}${tool.route}`).join('\n');
     }
 
     function selectRelevantCapabilities(tools, query) {
+      const aliases = { pdf: ['document'], qr: ['code'], image: ['photo', 'picture'], video: ['clip', 'movie'], diagram: ['chart', 'flowchart', 'architecture'], password: ['vault', 'keepass'], python: ['notebook', 'code'], compress: ['reduce', 'shrink', 'optimize'], convert: ['conversion', 'format'], transfer: ['send', 'move', 'share'] };
       const terms = query.toLowerCase().split(/[^a-z0-9]+/).filter(term => term.length > 2);
+      const expandedTerms = [...new Set(terms.flatMap(term => [term, ...Object.entries(aliases).filter(([, values]) => values.includes(term)).map(([key]) => key), ...(aliases[term] || [])]))];
       const ranked = tools.map(tool => {
         const searchable = [tool.name, tool.category, tool.summary, ...tool.capabilities, ...tool.inputs, ...tool.outputs].join(' ').toLowerCase();
-        const score = terms.reduce((total, term) => total + (searchable.includes(term) ? (tool.name.toLowerCase().includes(term) ? 4 : 1) : 0), 0);
+        const score = expandedTerms.reduce((total, term) => total + (searchable.includes(term) ? (tool.name.toLowerCase().includes(term) ? 8 : tool.capabilities.some(capability => capability.toLowerCase().includes(term)) ? 3 : 1) : 0), 0);
         return { tool, score };
       }).filter(item => item.score > 0).sort((a, b) => b.score - a.score);
       return ranked.slice(0, 4).map(item => item.tool);
@@ -1057,9 +1068,10 @@
     }
 
     function buildChatContext(history, userContent, catalogContext = '') {
-      const system = { role: 'system', content: `${CHAT_SYSTEM_PROMPT}\n\n${catalogContext}`.trim() };
+      const systemContent = `${CHAT_SYSTEM_PROMPT}\n\n${catalogContext}`.trim();
+      const system = { role: 'system', content: systemContent };
       const newest = { role: 'user', content: userContent };
-      let used = estimateTokens(CHAT_SYSTEM_PROMPT) + estimateTokens(userContent);
+      let used = estimateTokens(systemContent) + estimateTokens(userContent);
       const selected = [];
       for (let index = history.length - 1; index >= 0; index--) {
         const message = history[index];
@@ -1219,7 +1231,7 @@
           const catalog = await loadAICapabilities();
           const relevant = selectRelevantCapabilities(catalog.tools, content);
           const catalogContext = [
-            'LIVE TOOL CATALOG. Only recommend tools listed here; all listed tools are live.',
+            'LIVE TOOL CATALOG. These are the only tools you may recommend; all entries below are live.',
             capabilityIndex(catalog.tools),
             relevant.length ? `FOCUSED TOOL DETAILS:\n${capabilityDetails(relevant)}` : 'No focused tool match; answer generally and do not invent tool capabilities.'
           ].join('\n\n');
