@@ -39,19 +39,26 @@ Why:
 
 Rejected alternative: one generic manifest-driven `npm run build` abstraction. The manifest remains useful for version intent, but is not sufficient to express actual production build behavior.
 
-## Pin Every Upstream Version
+## Maintain Independent Tool Repositories
 
-Decision: use tags or full commit SHAs; never track upstream `main` or `master` automatically.
+Decision: maintain each product under a public `radianceskills-dev/trendy-<tool>` repository and build from its controlled `main` branch or owned release artifacts.
 
 Why:
 
-- Reproducibility.
-- Adapter assumptions are tied to exact upstream source shapes.
-- License and behavior changes should be reviewed deliberately.
+- Trendy Tools integrations such as BentoPDF AI are product evolution, not disposable build patches.
+- Future development must not depend on the continued availability of an unrelated GitHub repository or release asset.
+- Each tool can evolve independently without importing all source into one very large mixed-license monorepo.
+- Source history and applicable original license, notice, copyright, and attribution files remain available in each maintained repository.
+
+Baseline source was copied from the previously selected versions. CyberChef, KeeWeb, and JupyterLite artifacts consumed directly by production are retained as releases on their owned repositories. Original top-level repositories are no longer deployment dependencies.
+
+The BentoPDF and D2 first-party integrations are committed directly in their owned repositories. The deployment repository no longer injects those production integrations at build time, preventing a build from reconstructing a pre-AI source tree.
+
+CyberChef's AI recipe builder is also committed directly in `radianceskills-dev/trendy-cyberchef`. Its build now uses the owned source repository rather than the preserved pre-AI release archive.
 
 ## Do Not Commit Generated Tool Bundles
 
-Decision: generated `tools/` outputs are CI artifacts, not repository source.
+Decision: generated `tools/` outputs are CI artifacts, not repository source. Editable source belongs in the separate maintained tool repositories.
 
 Why:
 

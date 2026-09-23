@@ -12,8 +12,7 @@ if grep -Eq '^\.github/workflows/build-and-deploy\.yml$|^scripts/build-tool\.sh$
 fi
 
 case "$TOOL" in
-  bentopdf) grep -Eq '^scripts/adapt-bentopdf-|^integrations/bentopdf-' <<< "$changed" && exit 0 || true ;;
-  d2-playground) grep -Eq '^scripts/adapt-d2-ai\.mjs$|^integrations/d2-ai/' <<< "$changed" && exit 0 || true ;;
+  cyberchef) grep -Eq '^tools-manifest\.json$|^scripts/build-tool\.sh$' <<< "$changed" && exit 0 || true ;;
   freecut) grep -Eq '^scripts/adapt-freecut\.mjs$' <<< "$changed" && exit 0 || true ;;
   omniclip) grep -Eq '^scripts/adapt-omniclip\.mjs$' <<< "$changed" && exit 0 || true ;;
   excalidraw) grep -Eq '^scripts/adapt-excalidraw\.mjs$' <<< "$changed" && exit 0 || true ;;

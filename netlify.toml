@@ -108,3 +108,9 @@
   for = "/tools/bentopdf/*"
   [headers.values]
     Content-Security-Policy = "connect-src 'self' https:"
+
+# CyberChef AI recipe creation uses the shared configurable provider setup.
+[[headers]]
+  for = "/tools/cyberchef/*"
+  [headers.values]
+    Content-Security-Policy = "connect-src 'self' https:"

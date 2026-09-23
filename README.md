@@ -1,15 +1,15 @@
 # Trendy Tools
 
-A self-hosted, version-locked collection of 16 browser-only open-source tools. All processing happens client-side -- no server, no uploads, no tracking.
+A self-hosted collection of 16 browser-only tools maintained as Trendy Tools editions. All processing happens client-side -- no server, no uploads, no tracking.
 
 Live at: [trendytools.netlify.app](https://trendytools.netlify.app)
 
 ## How It Works
 
 1. **Dashboard** (`index.html`) -- a static hub page linking to all 16 tools
-2. **tools-manifest.json** -- pins each tool to a specific git tag or commit
+2. **tools-manifest.json** -- points to source repositories controlled by `radianceskills-dev`
 3. **GitHub Actions** -- clones, builds, and deploys all tools to Netlify on push
-4. **Version locked** -- tools never auto-update; you choose when to upgrade
+4. **Maintained editions** -- each tool can evolve independently while retaining its applicable open-source license and notices
 
 ## Tools Included
 
@@ -36,7 +36,7 @@ Live at: [trendytools.netlify.app](https://trendytools.netlify.app)
 
 Push to `main` triggers GitHub Actions which builds all tools and deploys to Netlify.
 
-To upgrade a tool: update its `ref` in `tools-manifest.json` and push.
+Develop each tool in its `radianceskills-dev/trendy-<tool>` repository. Trendy Tools builds from those maintained repositories and owned release artifacts.
 
 ## License
 

@@ -138,8 +138,8 @@ jobs:
 
       - name: Install browser-test dependencies
         run: |
-          mkdir -p .build-cache/bentopdf-browser-test
-          npm install --prefix .build-cache/bentopdf-browser-test --no-save playwright-core@1.55.0
+          mkdir -p .build-cache/browser-tests
+          npm install --prefix .build-cache/browser-tests --no-save playwright-core@1.55.0
 
       - name: Download tool outputs
         uses: actions/download-artifact@v4
@@ -164,12 +164,20 @@ jobs:
 
       - name: Browser-test BentoPDF AI with a mocked provider response
         run: |
-          git clone --depth 1 --branch v2.8.8 https://github.com/alam00000/bentopdf.git .build-cache/bentopdf
+          git clone --depth 1 --branch main https://github.com/radianceskills-dev/trendy-bentopdf.git .build-cache/bentopdf
           npm install --prefix .build-cache/bentopdf --legacy-peer-deps --no-audit --no-fund
-          cp integrations/bentopdf-ai/browser-test.cjs .build-cache/bentopdf-browser-test/browser-test.cjs
+          cp integrations/bentopdf-ai/browser-test.cjs .build-cache/browser-tests/bentopdf-browser-test.cjs
           CHROME_BIN="$(command -v google-chrome || command -v google-chrome-stable || command -v chromium || command -v chromium-browser)"
           test -n "$CHROME_BIN"
-          node .build-cache/bentopdf-browser-test/browser-test.cjs "$PWD" "$CHROME_BIN"
+          node .build-cache/browser-tests/bentopdf-browser-test.cjs "$PWD" "$CHROME_BIN"
+
+      - name: Browser-test CyberChef AI with a mocked provider response
+        run: |
+          git clone --depth 1 --branch main https://github.com/radianceskills-dev/trendy-cyberchef.git .build-cache/cyberchef
+          cp .build-cache/cyberchef/tests/trendy-ai/browser-test.cjs .build-cache/browser-tests/cyberchef-browser-test.cjs
+          CHROME_BIN="$(command -v google-chrome || command -v google-chrome-stable || command -v chromium || command -v chromium-browser)"
+          test -n "$CHROME_BIN"
+          node .build-cache/browser-tests/cyberchef-browser-test.cjs "$PWD/tools/cyberchef" "$CHROME_BIN"
 
       - name: Deploy only a complete validated batch
         uses: nwtgck/actions-netlify@v3

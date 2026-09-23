@@ -2,9 +2,11 @@
 
 ## Project Snapshot
 
-Trendy Tools is a static, browser-first collection of pinned third-party tools deployed as one Netlify site at `https://trendytools.netlify.app`.
+Trendy Tools is a static, browser-first collection of independently maintained Trendy Tools editions deployed as one Netlify site at `https://trendytools.netlify.app`.
 
-The repository does not contain the generated third-party tool bundles. GitHub Actions clones pinned upstream sources or downloads pinned releases, adapts them for subpath hosting, builds them, validates the complete assembled site, browser-tests the BentoPDF AI workflow, and deploys the repository root to Netlify.
+The deployment repository does not contain generated tool bundles. GitHub Actions clones source repositories owned by `radianceskills-dev` or downloads owned release artifacts, adapts them for subpath hosting, builds them, validates the complete assembled site, browser-tests the BentoPDF AI workflow, and deploys the repository root to Netlify.
+
+All 16 manifest tools have public `radianceskills-dev/trendy-<tool>` source repositories. CyberChef, KeeWeb, and JupyterLite build artifacts consumed directly by production are stored as releases on their corresponding owned repositories. Applicable original licenses, notices, copyright statements, and source history remain part of each maintained repository.
 
 The latest verified production deployment at the time this file was written is GitHub Actions run `35731448856` for commit `58a6252`; it completed successfully.
 
@@ -64,7 +66,7 @@ BentoPDF and D2 both consume the shared transport contract. Preset endpoints are
 
 ## BentoPDF Customization
 
-BentoPDF is more than a stock upstream build. The repository injects:
+BentoPDF is a maintained Trendy Tools source repository. Its owned repository contains:
 
 - A simplified Trendy Tools homepage that prioritizes the PDF Workflow Builder.
 - An AI workflow-planning modal and toolbar entry.
@@ -78,11 +80,14 @@ The workflow validates generated HTML and bundle markers and runs `integrations/
 
 ## D2 Customization
 
-D2 Playground receives an injected AI panel. The AI creates complete D2 source and replaces the current diagram only after confirmation. Production analytics are removed. Monaco's WASM path is patched for the `/tools/d2-playground/` route.
+D2 Playground is a maintained Trendy Tools source repository containing the AI panel. The AI creates complete D2 source and replaces the current diagram only after confirmation. Production analytics are removed. Monaco's WASM path is patched for the `/tools/d2-playground/` route.
 
 ## Known Issues And Incomplete Work
 
 - DuckDB-Wasm and WebLLM have manifest/dashboard entries but no production build modules or first-party UIs.
+- Changes made directly in an owned tool repository do not automatically trigger this deployment repository. Run `build-and-deploy.yml` manually, or add an explicit cross-repository dispatch workflow when automatic tool-source deployments are needed.
+- The central build no longer runs the BentoPDF or D2 production adapters. Those files remain migration references; production AI source is committed in the owned repositories.
+- CyberChef AI recipe builder is committed in `radianceskills-dev/trendy-cyberchef` at `dd79de5c`. The production build now compiles that owned source rather than downloading the preserved baseline ZIP.
 - The root `README.md` has some stale wording/version information. For example, it still describes a monolithic build and lists KeeWeb as `v1.18.7`, while the actual build uses the `v1.18.9` official web artifact. Treat workflow scripts and this context as the current source of truth until README cleanup is done.
 - GitHub Actions emits warnings that several actions still target deprecated Node.js 20 internally and that `ubuntu-latest` will migrate to Ubuntu 26. These are warnings, not current failures.
 - The AI flows have CI coverage for generated transports and mocked BentoPDF behavior, but real interactive OpenRouter and Puter sign-in still require manual browser verification when those providers change behavior.

@@ -27,7 +27,7 @@ jobs:
       - name: Fetch and verify pinned BentoPDF
         run: |
           set -euxo pipefail
-          git clone --depth 1 --branch v2.8.8 https://github.com/alam00000/bentopdf.git .build-cache/bentopdf
+          git clone --depth 1 --branch main https://github.com/radianceskills-dev/trendy-bentopdf.git .build-cache/bentopdf
           test "$(git -C .build-cache/bentopdf rev-parse HEAD)" = f96cd4e5166f3d51393dfe9f3c440b5bb77802f1
           git -C .build-cache/bentopdf rev-parse HEAD
       - name: Adapt and build BentoPDF only

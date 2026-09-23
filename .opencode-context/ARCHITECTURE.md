@@ -13,7 +13,7 @@ tools/
 netlify.toml
 ```
 
-The source repository contains the dashboard, version manifest, adapters, integrations, validation, and deployment workflow. Generated `tools/` output is ephemeral CI output and is deliberately not committed.
+This repository contains the dashboard, source manifest, adapters, integrations, validation, and deployment workflow. Each tool's editable source lives in a separate public `radianceskills-dev/trendy-<tool>` repository. Generated `tools/` output is ephemeral CI output and is deliberately not committed.
 
 This boundary exists because the upstream projects use different frameworks, package managers, runtime versions, release formats, base-path assumptions, service workers, and browser security requirements. A generic "clone and npm build" abstraction would hide important per-tool behavior and make failures harder to diagnose.
 
@@ -40,7 +40,7 @@ The dashboard is intentionally plain HTML/CSS/JavaScript. Introducing a framewor
 
 Each implemented tool is one module in `scripts/build-tool.sh`. A module owns:
 
-- Its exact upstream repository/release URL and ref.
+- Its Trendy Tools-owned source repository or release artifact.
 - Its package manager and runtime assumptions.
 - Subpath adaptation for `/tools/<id>/`.
 - Output copying into `tools/<id>/`.
@@ -49,11 +49,11 @@ This explicit case-based script is intentional. Do not replace it with a generic
 
 ### Adapter Boundary
 
-Files under `scripts/adapt-*.mjs` mutate temporary upstream checkouts at build time. The repository does not fork or vendor whole upstream applications.
+Files under `scripts/adapt-*.mjs` mutate temporary checkouts of the maintained tool repositories at build time. Broad tool source trees remain in their separate repositories rather than this deployment repository.
 
 Why this boundary exists:
 
-- Upstream sources remain pinned and reproducible.
+- Tool source remains independently editable under Trendy Tools control.
 - Trendy Tools changes remain reviewable as small adapters.
 - Route fixes, privacy changes, and product integrations can be reapplied when upgrading a pin.
 - Signature checks fail loudly when an upstream ref no longer matches adapter assumptions.
@@ -62,11 +62,11 @@ Why this boundary exists:
 
 Files under `integrations/` are first-party product features injected into upstream applications.
 
-- `integrations/bentopdf-ai/` contains the reviewed AI workflow system, tests, templates, capability registry, and browser test.
-- `integrations/bentopdf-home/` contains homepage and service-worker adaptations.
-- `integrations/d2-ai/` contains the D2 AI panel, transport behavior, and styling.
+- `integrations/bentopdf-ai/` retains integration tests and migration reference assets; production AI workflow source lives in `radianceskills-dev/trendy-bentopdf`.
+- `integrations/bentopdf-home/` retains migration reference assets; production homepage and service-worker changes live in `radianceskills-dev/trendy-bentopdf`.
+- `integrations/d2-ai/` retains migration reference assets; production D2 AI source lives in `radianceskills-dev/trendy-d2-playground`.
 
-The shared browser AI setting is a cross-module contract. Dashboard schema changes must be checked against both BentoPDF and D2 consumers.
+The shared browser AI setting is a cross-repository contract. Dashboard schema changes must be checked against the BentoPDF and D2 owned repositories.
 
 ### Deployment Assembly Boundary
 
@@ -79,19 +79,19 @@ This complete-batch gate prevents a successful partial build from publishing a d
 | Module | Upstream form | Build/adaptation dependency | Output |
 |---|---|---|---|
 | IT-Tools | Git tag | Vite base-path patch | `tools/it-tools/` |
-| BentoPDF | Git tag | `adapt-bentopdf-ai.mjs`, `adapt-bentopdf-home.mjs`, both Bento integrations, tests | `tools/bentopdf/` |
+| BentoPDF | Maintained source repository | Integrated AI workflow and homepage source, tests | `tools/bentopdf/` |
 | Squoosh | Git commit | Python source patch for static URLs/PWA paths | `tools/squoosh/` |
 | FreeCut | Git commit | `adapt-freecut.mjs`, PWA/router/subpath changes | `tools/freecut/` |
 | Omniclip | Git commit | `adapt-omniclip.mjs`, telemetry removal, import-map/vendor rewrite | `tools/omniclip/` |
-| D2 Playground | Git commit + submodule | `adapt-d2-ai.mjs`, D2 integration, Monaco path patch | `tools/d2-playground/` |
-| CyberChef | Official ZIP | Release extraction only | `tools/cyberchef/` |
+| D2 Playground | Maintained source + owned submodules | Integrated AI source, Monaco path patch | `tools/d2-playground/` |
+| CyberChef | Trendy Tools-owned release ZIP | Release extraction only | `tools/cyberchef/` |
 | miniPaint | Git tag | Upstream build plus static source-relative assets | `tools/minipaint/` |
 | JupyterLite | Python packages | Python 3.12, JupyterLite/Pyodide build | `tools/jupyterlite/` |
 | Decimen | Git commit | Vite base-path patch | `tools/decimen/` |
 | Bolo | Git commit | Copy standalone HTML | `tools/bolo/` |
 | Excalidraw | Git tag | Node 22, `adapt-excalidraw.mjs`, tracking disabled | `tools/excalidraw/` |
 | OpenQR | Git tag | pnpm 10.16.1, custom Next config, `adapt-openqr.mjs` | `tools/openqr/` |
-| KeeWeb | Official ZIP | Release extraction only | `tools/keeweb/` |
+| KeeWeb | Trendy Tools-owned release ZIP | Release extraction only | `tools/keeweb/` |
 
 Planned but unimplemented modules:
 
@@ -109,6 +109,16 @@ The build environment uses:
 - npm, pnpm, Yarn, Git, curl, unzip, esbuild, and Chrome/Chromium.
 
 The runtime site is static. It has no application backend. AI provider calls originate from the user's browser.
+
+## Maintained Source Boundary
+
+The tools are maintained products rather than disposable checkouts of repositories outside Trendy Tools control. The `radianceskills-dev/trendy-<tool>` repositories are the editable source lines and use `main` for ongoing development.
+
+- Production must not depend on the availability of an original top-level project repository or release asset.
+- Original license, notice, copyright, attribution, and source-history obligations remain required.
+- Third-party package-manager dependencies still resolve through their normal ecosystems; this boundary does not mirror every transitive npm, PyPI, Cargo, or Git dependency.
+- D2's required source submodules resolve through `radianceskills-dev/trendy-d2-vscode` and `radianceskills-dev/trendy-ci`.
+- CyberChef and KeeWeb web archives, plus the JupyterLite wheels consumed by production, are retained as owned GitHub release assets.
 
 ## Routing And Browser Security
 

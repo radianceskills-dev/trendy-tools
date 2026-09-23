@@ -54,14 +54,13 @@ All tools rebuild when one of these changes:
 
 Tool-specific rebuilds:
 
-- BentoPDF: `scripts/adapt-bentopdf-*` or `integrations/bentopdf-*`
-- D2 Playground: `scripts/adapt-d2-ai.mjs` or `integrations/d2-ai/`
+- BentoPDF and D2 production source changes occur in their owned repositories. Dispatch this deployment workflow after those changes.
 - FreeCut: `scripts/adapt-freecut.mjs`
 - Omniclip: `scripts/adapt-omniclip.mjs`
 - Excalidraw: `scripts/adapt-excalidraw.mjs`
 - OpenQR: `scripts/adapt-openqr.mjs` or `scripts/openqr.next.config.mjs`
 
-If `tools-manifest.json` changes, the script compares the previous and current JSON entry for each tool and rebuilds only entries that changed.
+If `tools-manifest.json` changes, the script compares the previous and current JSON entry for each tool and rebuilds only entries that changed. Tool source repositories are independent, so a source-only push currently requires a manual workflow dispatch in this repository unless a cross-repository dispatch is added.
 
 Manual dispatch always rebuilds every tool. A missing cached `index.html` also forces a rebuild.
 
@@ -97,7 +96,7 @@ The checkout supplies the current dashboard, Netlify configuration, integrations
 
 Validation intentionally uses stable generated markers. Bundlers may minify variable/property names, so avoid assertions against source-only identifiers such as `settings.endpoint` unless the literal is guaranteed to survive production bundling.
 
-After static validation, the final job runs the BentoPDF browser test using Playwright Core and a runner-provided Chrome/Chromium binary. It clones and installs BentoPDF source separately because the test needs upstream locale files and `pdf-lib`, which are not all present in the static artifact.
+After static validation, the final job runs BentoPDF and CyberChef AI browser tests using Playwright Core and a runner-provided Chrome/Chromium binary. BentoPDF clones its maintained source because the test needs locale files and `pdf-lib`; CyberChef tests the assembled static artifact with a mocked provider and verifies input privacy, review-first behavior, and recipe loading.
 
 ## Deployment
 
@@ -135,8 +134,8 @@ The build scripts are Bash/Linux-oriented. On Windows, Git Bash may perform synt
 - Omniclip directories named `node_modules` are renamed to `vendor` because Netlify recursively excludes `node_modules` directories.
 - Squoosh is old/pinned and requires source patching before build.
 - D2 requires a recursive submodule, esbuild `0.16.3`, and a patched Monaco `onig.wasm` path.
-- JupyterLite is built from pinned Python packages, not an upstream repository checkout.
-- CyberChef and KeeWeb use official ZIP artifacts rather than source builds.
+- JupyterLite installs exact wheels retained on `radianceskills-dev/trendy-jupyterlite` before building the static site.
+- KeeWeb uses a ZIP artifact retained on its Trendy Tools-owned repository. CyberChef is built from the maintained `radianceskills-dev/trendy-cyberchef` source repository.
 - Git tags may resolve through tag objects, producing harmless "tag is not a commit" checkout warnings.
 
 ## Do Not Simplify Away
@@ -147,4 +146,4 @@ The build scripts are Bash/Linux-oriented. On Windows, Git Bash may perform synt
 - Adapter signature checks.
 - Browser validation of BentoPDF.
 - Route-specific Netlify headers and redirects.
-- Pinned refs and explicit manual upgrades.
+- Controlled tool source repositories and reviewed source updates.

@@ -11,13 +11,16 @@ Treat these as hard invariants unless the user explicitly changes the product ar
 - Custom AI endpoints must use HTTPS.
 - OpenRouter and B.AI preset IDs must resolve to their trusted fixed endpoints, not arbitrary stored endpoint values.
 
-## Versioning And Upstream Sources
+## Maintained Tool Sources
 
-- Every live tool must be pinned to an exact release tag or full commit SHA.
-- Never switch a pin to upstream `main` or `master` for convenience.
-- Do not auto-update dependencies or pins without an explicit upgrade decision and validation.
-- Preserve each upstream license and attribution.
-- Do not vendor broad upstream source trees into this repository when a build adapter is sufficient.
+- Every tool's editable source must remain in its corresponding public `radianceskills-dev/trendy-<tool>` repository, not only in an external original repository.
+- Production builds must use Trendy Tools-owned top-level source repositories and release artifacts.
+- Preserve each applicable original license, notice, copyright statement, source history, and attribution.
+- Do not import broad tool source trees into this deployment repository; keep the separate-repository boundary.
+- Changes to a maintained tool's `main` branch must be deliberate and validated through the complete Trendy Tools assembly before production deployment.
+- Production AI features for BentoPDF and D2 must remain committed in their owned repositories; central build-time injection must not be required to restore them.
+- CyberChef production must build from `radianceskills-dev/trendy-cyberchef`; do not restore the pre-AI release ZIP as its deployment source.
+- Do not claim independence from all third-party ecosystems: package-manager and transitive dependencies may still come from npm, PyPI, Cargo, or other licensed dependency sources.
 
 ## Build And Deployment
 
@@ -69,6 +72,7 @@ Treat these as hard invariants unless the user explicitly changes the product ar
 - Do not mark un-hashed tool routes or HTML/service-worker files immutable.
 - Keep SPA fallbacks for the tools that need them.
 - Keep HTTPS provider connectivity for BentoPDF and D2 AI unless the provider architecture changes.
+- Keep HTTPS provider connectivity for CyberChef AI and preserve its mocked-provider browser test.
 
 ## Validation Discipline
 

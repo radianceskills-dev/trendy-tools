@@ -1,6 +1,15 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
+if grep -REq 'github\.com/(alam00000|CorentinTh|gchq|GoogleChromeLabs|viliusle|walterlow|omni-media|excalidraw|d2lang|jupyterlite|duckdb|open-qr|aryanjsx|keeweb|mlc-ai|NakliTechie)/' scripts .github tools-manifest.json; then
+  echo "Deployment configuration must use Trendy Tools-owned top-level sources and artifacts." >&2
+  exit 1
+fi
+
+for source_repo in bentopdf it-tools cyberchef squoosh minipaint freecut omniclip excalidraw d2-playground jupyterlite duckdb-wasm openqr decimen keeweb web-llm bolo; do
+  grep -q "https://github.com/radianceskills-dev/trendy-$source_repo" tools-manifest.json
+done
+
 for tool in it-tools bentopdf squoosh freecut omniclip d2-playground cyberchef minipaint jupyterlite decimen bolo excalidraw openqr keeweb; do
   test -f "tools/$tool/index.html"
 done
@@ -48,6 +57,10 @@ grep -q '#ai-create-panel' tools/d2-playground/build/style.css
 ! grep -q 'data-domain="play.d2lang.com"' tools/d2-playground/index.html
 grep -q '/tools/decimen/' tools/decimen/index.html
 test -f tools/cyberchef/assets/main.js
+grep -q 'id="trendy-ai-recipe-button"' tools/cyberchef/index.html
+grep -q 'id="trendy-ai-recipe-modal"' tools/cyberchef/index.html
+grep -Rq 'trendytools.ai.v1' tools/cyberchef/assets
+grep -Rq 'Build a CyberChef recipe with AI' tools/cyberchef/assets
 test -f tools/minipaint/dist/bundle.js
 grep -q '/tools/excalidraw/' tools/excalidraw/index.html
 test -f tools/excalidraw/manifest.webmanifest
