@@ -239,7 +239,7 @@
     .availability { color: #58707a; font-size: 11px; font-weight: 750; }
     .ai-badge { display: inline-flex; align-items: center; gap: 6px; margin-top: 14px; padding: 6px 9px; width: max-content; border: 1px solid rgba(55, 97, 180, .28); border-radius: 999px; color: #234f80; background: rgba(207, 222, 250, .72); box-shadow: 0 4px 12px rgba(51, 91, 165, .1); font-size: 10px; font-weight: 850; letter-spacing: .06em; text-transform: uppercase; }
     .ai-badge::before { content: "✦"; font-size: 11px; }
-    .tool.ai-featured { grid-column: span 2; min-height: 270px; border-color: rgba(57, 102, 175, .35); background: linear-gradient(135deg, rgba(224, 237, 255, .96), rgba(247, 251, 255, .94) 58%, rgba(228, 244, 240, .9)); box-shadow: 0 1px 0 rgba(255,255,255,.85) inset, 0 16px 42px rgba(49, 87, 143, .13); }
+    .tool.ai-featured { border-color: rgba(57, 102, 175, .35); background: linear-gradient(135deg, rgba(224, 237, 255, .96), rgba(247, 251, 255, .94) 58%, rgba(228, 244, 240, .9)); box-shadow: 0 1px 0 rgba(255,255,255,.85) inset, 0 16px 42px rgba(49, 87, 143, .13); }
     .tool.ai-featured::before { width: 7px; background: linear-gradient(180deg, #426fcb, #3b8c82); }
     .tool.ai-featured::after { content: "AI"; position: absolute; top: 18px; right: 18px; color: rgba(38, 79, 135, .38); font-size: 42px; font-weight: 900; line-height: 1; letter-spacing: -.08em; }
     .tool.ai-featured .tool-icon { border-color: rgba(52, 96, 172, .28); color: #315e9c; background: rgba(220, 233, 255, .9); box-shadow: 0 8px 20px rgba(54, 93, 160, .12); }
@@ -413,7 +413,6 @@
       .btn { width: 100%; }
       h1 { font-size: 43px; }
       .tools { grid-template-columns: 1fr; }
-      .tool.ai-featured { grid-column: span 1; }
       .ask-ai-fab { right: 14px; bottom: 14px; }
       .chat-dialog { width: calc(100% - 14px); height: calc(100vh - 14px); }
       .chat-message { max-width: 94%; }
