@@ -73,6 +73,7 @@
       "repo": "https://github.com/radianceskills-dev/trendy-freecut",
       "ref": "main",
       "refType": "branch",
+      "sourceRevision": "8bf9accf",
       "license": "MIT",
       "build": "npm ci && node scripts/adapt-freecut.mjs && npm run build",
       "outputDir": "dist",
