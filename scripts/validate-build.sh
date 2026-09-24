@@ -60,7 +60,7 @@ test -f tools/cyberchef/assets/main.js
 grep -q 'id="trendy-ai-recipe-button"' tools/cyberchef/index.html
 grep -q 'id="trendy-ai-recipe-modal"' tools/cyberchef/index.html
 grep -Rq 'trendytools.ai.v1' tools/cyberchef/assets
-grep -Rq 'Build a CyberChef recipe with AI' tools/cyberchef/assets
+grep -q 'Build a CyberChef recipe with AI' tools/cyberchef/index.html
 test -f tools/minipaint/dist/bundle.js
 grep -q '/tools/excalidraw/' tools/excalidraw/index.html
 test -f tools/excalidraw/manifest.webmanifest
