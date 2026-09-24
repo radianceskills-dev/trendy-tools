@@ -210,13 +210,10 @@
       background: hsl(var(--hue) 45% 45% / .7);
       transition: width .22s ease;
     }
-    .tool::after { content: "↗"; position: absolute; top: 18px; right: 19px; color: #80929a; font-size: 17px; transition: transform .2s, color .2s; }
     .tool:hover { transform: translateY(-5px); border-color: hsl(var(--hue) 35% 46% / .32); background: #fff; box-shadow: var(--shadow); }
     .tool:hover::before { width: 7px; }
-    .tool:hover::after { color: var(--blue-strong); transform: translate(2px,-2px); }
     .tool.disabled { cursor: default; opacity: .66; }
     .tool.disabled:hover { transform: none; box-shadow: 0 10px 30px rgba(65,84,91,.045); }
-    .tool.disabled::after { content: ""; }
     .tool[hidden] { display: none; }
 
     .tool-top { display: flex; justify-content: space-between; align-items: flex-start; gap: 12px; }
@@ -240,9 +237,13 @@
     .tool-footer { display: flex; align-items: center; justify-content: space-between; gap: 10px; }
     .version { color: #7c8d93; font: 10px/1.2 ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; }
     .availability { color: #58707a; font-size: 11px; font-weight: 750; }
-    .ai-badge { display: inline-flex; align-items: center; gap: 6px; margin-top: 14px; padding: 6px 8px; width: max-content; border: 1px solid rgba(39,107,137,.18); border-radius: 999px; color: #205b75; background: rgba(185,219,229,.28); font-size: 10px; font-weight: 850; letter-spacing: .06em; text-transform: uppercase; }
+    .ai-badge { display: inline-flex; align-items: center; gap: 6px; margin-top: 14px; padding: 6px 9px; width: max-content; border: 1px solid rgba(55, 97, 180, .28); border-radius: 999px; color: #234f80; background: rgba(207, 222, 250, .72); box-shadow: 0 4px 12px rgba(51, 91, 165, .1); font-size: 10px; font-weight: 850; letter-spacing: .06em; text-transform: uppercase; }
     .ai-badge::before { content: "✦"; font-size: 11px; }
-    .tool.ai-featured { grid-column: span 2; min-height: 270px; background: linear-gradient(140deg, rgba(238,248,249,.94), rgba(255,255,255,.88)); }
+    .tool.ai-featured { grid-column: span 2; min-height: 270px; border-color: rgba(57, 102, 175, .35); background: linear-gradient(135deg, rgba(224, 237, 255, .96), rgba(247, 251, 255, .94) 58%, rgba(228, 244, 240, .9)); box-shadow: 0 1px 0 rgba(255,255,255,.85) inset, 0 16px 42px rgba(49, 87, 143, .13); }
+    .tool.ai-featured::before { width: 7px; background: linear-gradient(180deg, #426fcb, #3b8c82); }
+    .tool.ai-featured::after { content: "AI"; position: absolute; top: 18px; right: 18px; color: rgba(38, 79, 135, .38); font-size: 42px; font-weight: 900; line-height: 1; letter-spacing: -.08em; }
+    .tool.ai-featured .tool-icon { border-color: rgba(52, 96, 172, .28); color: #315e9c; background: rgba(220, 233, 255, .9); box-shadow: 0 8px 20px rgba(54, 93, 160, .12); }
+    .tool.ai-featured:hover { border-color: rgba(45, 91, 166, .55); background: linear-gradient(135deg, #e3efff, #fff 58%, #e8f7f3); box-shadow: 0 24px 58px rgba(47, 85, 142, .2); }
 
     .empty { display: none; padding: 56px 20px; text-align: center; color: var(--muted); border: 1px dashed var(--line-strong); border-radius: 17px; }
     .empty.show { display: block; }
@@ -1266,7 +1267,7 @@ When the user describes a task, first decide whether one or more LIVE TOOL CATAL
      const tools = [
        { name:'BentoPDF', category:'PDF', description:'Merge, split, OCR, sign and compress PDFs.', version:'v2.8.8', ready:true, ai:true, id:'bentopdf', icon:'document', hue:198 },
       { name:'IT-Tools', category:'Developer', description:'Everyday developer and data utilities.', version:'v2024.10.22', ready:true, id:'it-tools', icon:'code', hue:191 },
-      { name:'CyberChef', category:'Data & Crypto', description:'Transform, encode, encrypt and inspect data.', version:'v11.3.0', ready:true, id:'cyberchef', icon:'spark', hue:273 },
+       { name:'CyberChef', category:'Data & Crypto', description:'Transform, encode, encrypt and inspect data.', version:'v11.3.0', ready:true, ai:true, id:'cyberchef', icon:'spark', hue:273 },
       { name:'Squoosh', category:'Images', description:'Compress and convert images locally.', version:'e8d35e0', ready:true, id:'squoosh', icon:'image', hue:326 },
       { name:'miniPaint', category:'Images', description:'Edit images with layers, filters and effects.', version:'v4.14.3', ready:true, id:'minipaint', icon:'brush', hue:342 },
       { name:'FreeCut', category:'Video', description:'Edit multi-track video in your browser.', version:'4d62e808', ready:true, id:'freecut', icon:'video', hue:8 },
