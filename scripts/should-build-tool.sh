@@ -13,7 +13,7 @@ fi
 
 case "$TOOL" in
   cyberchef) grep -Eq '^tools-manifest\.json$|^scripts/build-tool\.sh$' <<< "$changed" && exit 0 || true ;;
-  freecut) grep -Eq '^scripts/adapt-freecut\.mjs$' <<< "$changed" && exit 0 || true ;;
+  freecut) grep -Eq '^tools-manifest\.json$|^scripts/adapt-freecut\.mjs$' <<< "$changed" && exit 0 || true ;;
   omniclip) grep -Eq '^scripts/adapt-omniclip\.mjs$' <<< "$changed" && exit 0 || true ;;
   excalidraw) grep -Eq '^scripts/adapt-excalidraw\.mjs$' <<< "$changed" && exit 0 || true ;;
   openqr) grep -Eq '^scripts/adapt-openqr\.mjs$|^scripts/openqr\.next\.config\.mjs$' <<< "$changed" && exit 0 || true ;;
