@@ -276,7 +276,7 @@
 
     .ai-dialog {
       width: min(520px, calc(100% - 28px));
-      max-height: min(760px, calc(100vh - 28px));
+      height: min(760px, calc(100vh - 28px));
       padding: 0;
       overflow: auto;
       border: 1px solid var(--line-strong);
@@ -522,16 +522,7 @@
         </div>
       </section>
 
-      <form class="ai-form" id="ai-form" hidden>
-        <div class="field">
-          <label for="ai-provider">Provider</label>
-          <select id="ai-provider" required>
-            <option value="openrouter">OpenRouter</option>
-            <option value="bai">B.AI</option>
-            <option value="custom">Custom provider</option>
-          </select>
-        </div>
-
+       <form class="ai-form" id="ai-form" hidden>
         <div class="field" id="ai-custom-url-field" hidden>
           <div class="field-row"><label for="ai-custom-url">Provider URL</label><span class="field-hint">OpenAI-compatible API base or chat endpoint</span></div>
           <input id="ai-custom-url" type="url" placeholder="https://example.com/v1" spellcheck="false">
@@ -692,7 +683,7 @@
        const puterSearch = document.querySelector('#ai-puter-search');
        const openRouterLoad = document.querySelector('#ai-openrouter-load');
        const puterLoad = document.querySelector('#ai-puter-load');
-      const providerInput = document.querySelector('#ai-provider');
+       const providerInput = { value: 'custom' };
       const keyInput = document.querySelector('#ai-key');
       const keyToggle = document.querySelector('#ai-key-toggle');
        const modelInput = document.querySelector('#ai-model');
@@ -706,7 +697,7 @@
       const docs = document.querySelector('#ai-docs');
        const status = document.querySelector('#ai-status');
        const triggerLabel = document.querySelector('#ai-trigger-label');
-       let lastProvider = providerInput.value;
+       let lastProvider = 'custom';
        let availableModels = [];
        const authModels = { openrouter: [], puter: [] };
        let activeTab = 'openrouter';
@@ -808,7 +799,8 @@
          models.innerHTML = visible.map(model => `<option value="${model}"></option>`).join('');
        }
 
-       function applyProvider(provider, replaceModel = true, saved = null) {
+        function applyProvider(provider, replaceModel = true, saved = null) {
+          if (provider !== 'custom' && provider !== 'puter') provider = 'custom';
          if (provider === 'puter') {
            form.hidden = true;
            lastProvider = provider;
@@ -828,19 +820,20 @@
          lastProvider = provider;
        }
 
-       function populate() {
-         const saved = readAISettings();
-         providerInput.value = aiProviders[saved?.provider] ? saved.provider : 'openrouter';
-         applyProvider(providerInput.value, true, saved);
-         keyInput.value = saved?.apiKey || '';
-         modelInput.value = saved?.model || aiProviders[providerInput.value]?.defaultModel || '';
+        function populate() {
+          const saved = readAISettings();
+          const customSaved = saved?.provider === 'custom' ? saved : null;
+           providerInput.value = 'custom';
+           applyProvider('custom', true, customSaved);
+          keyInput.value = customSaved?.apiKey || '';
+          modelInput.value = customSaved?.model || '';
          modelSearch.value = '';
         keyInput.type = 'password';
         keyToggle.setAttribute('aria-label', 'Show API key');
          status.textContent = '';
          status.classList.remove('error');
          form.hidden = true;
-         activateTab(saved?.provider === 'puter' ? 'puter' : 'openrouter');
+           activateTab(saved?.provider === 'custom' ? 'custom' : saved?.provider === 'puter' ? 'puter' : 'openrouter');
          if (saved?.provider === 'puter' || saved?.provider === 'openrouter') void loadAuthModels(saved.provider);
        }
 
@@ -853,7 +846,6 @@
       dialog.addEventListener('click', event => {
         if (event.target === dialog) dialog.close();
       });
-       providerInput.addEventListener('change', () => applyProvider(providerInput.value, providerInput.value !== lastProvider));
        tabs.forEach(tab => tab.addEventListener('click', () => activateTab(tab.id.replace('ai-tab-', ''))));
        openRouterAuth.addEventListener('click', () => { status.textContent = 'Opening OpenRouter…'; void startOpenRouterAuth(); });
        puterAuth.addEventListener('click', async () => {
@@ -882,9 +874,8 @@
        customUrl.addEventListener('input', () => { if (providerInput.value === 'custom') endpoint.value = customUrl.value ? endpointFor(customUrl.value) : ''; });
        modelSearch.addEventListener('input', renderModels);
        loadModels.addEventListener('click', async () => {
-         const provider = providerInput.value;
-         const config = aiProviders[provider];
-         const url = provider === 'custom' ? customUrl.value : config.baseUrl;
+          const provider = 'custom';
+          const url = customUrl.value;
          if (!url) { modelStatus.textContent = 'Enter a provider URL first.'; return; }
          loadModels.disabled = true;
          modelStatus.textContent = 'Loading models…';
@@ -906,15 +897,14 @@
       form.addEventListener('submit', event => {
         event.preventDefault();
         if (!form.reportValidity()) return;
-         const provider = providerInput.value;
-          const config = aiProviders[provider];
-          const baseUrl = provider === 'custom' ? baseUrlFor(customUrl.value) : config.baseUrl;
+          const provider = 'custom';
+           const baseUrl = baseUrlFor(customUrl.value);
           if (!baseUrl || !/^https:\/\//i.test(baseUrl)) { customUrl.focus(); status.textContent = 'Use an HTTPS provider URL.'; status.classList.add('error'); return; }
          localStorage.setItem(AI_STORAGE_KEY, JSON.stringify({
            version: 2,
            transport: 'openai',
           provider,
-           providerLabel: config?.label || 'Custom provider',
+           providerLabel: 'Custom provider',
           apiKey: keyInput.value.trim(),
           model: modelInput.value.trim(),
            baseUrl,
