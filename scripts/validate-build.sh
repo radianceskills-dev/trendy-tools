@@ -10,10 +10,12 @@ for source_repo in bentopdf it-tools cyberchef squoosh minipaint freecut omnicli
   grep -q "https://github.com/radianceskills-dev/trendy-$source_repo" tools-manifest.json
 done
 
-for tool in it-tools bentopdf squoosh freecut omniclip d2-playground cyberchef minipaint jupyterlite decimen bolo excalidraw openqr keeweb; do
+for tool in cv-builder it-tools bentopdf squoosh freecut omniclip d2-playground cyberchef minipaint jupyterlite decimen bolo excalidraw openqr keeweb; do
   test -f "tools/$tool/index.html"
 done
 
+grep -q '/tools/cv-builder/' tools/cv-builder/index.html
+grep -q 'Trendy CV' tools/cv-builder/index.html
 grep -q '/tools/it-tools/' tools/it-tools/index.html
 grep -q '/tools/bentopdf/' tools/bentopdf/index.html
 grep -q 'id="trendy-bentopdf-workflow-first"' tools/bentopdf/index.html

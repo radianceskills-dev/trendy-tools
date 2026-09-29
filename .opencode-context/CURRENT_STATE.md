@@ -12,6 +12,8 @@ The latest verified production deployment at the time this file was written is G
 
 ## Implemented Routes
 
+CV Builder integration is prepared as a fifteenth matrix tool; see `CV_BUILDER.md` for its owned source, commands, capabilities, and remaining limitations. Deployment must pass before calling the new route live.
+
 The CI matrix currently produces 14 routes under `tools/`:
 
 - `it-tools`

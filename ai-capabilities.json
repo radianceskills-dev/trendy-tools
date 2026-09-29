@@ -2,6 +2,19 @@
   "version": 1,
   "tools": [
     {
+      "id": "cv-builder",
+      "name": "CV Builder",
+      "category": "Career / Documents",
+      "summary": "Create CVs locally with multiple template designs and independent themes.",
+      "capabilities": ["edit CV sections", "choose CV templates", "change CV themes", "assign sections to pages", "export CV as PDF", "save JSON backup", "import JSON Resume"],
+      "inputs": ["structured CV data", "text", "JSON"],
+      "outputs": ["PDF", "JSON"],
+      "privacy": "Drafts stay in IndexedDB. Only explicitly selected text and instructions are sent for AI rewrites.",
+      "aiFeatures": ["Propose improvements to selected summary or description text, then review and accept."],
+      "guidance": ["Never invent employment history, qualifications, metrics, or achievements.", "Page assignment is manual; refresh the PDF preview to check layout."],
+      "route": "/tools/cv-builder/"
+    },
+    {
       "id": "bentopdf",
       "name": "BentoPDF",
       "category": "PDF / Documents",
