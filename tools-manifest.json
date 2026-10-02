@@ -9,7 +9,7 @@
       "repo": "https://github.com/radianceskills-dev/trendy-cv",
       "ref": "main",
       "refType": "branch",
-      "sourceRevision": "a9560245c",
+      "sourceRevision": "6445362f0",
       "license": "MIT",
       "build": "pnpm --filter trendy-cv build",
       "outputDir": "apps/trendy-cv/dist"
