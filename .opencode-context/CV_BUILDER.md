@@ -1,5 +1,7 @@
 # CV Builder
 
+Release source `1f78f87a5` adds Phase C: accepted plans expose personal details and registry-driven section entry editors, reviewed paste extraction, explicit legacy-entry restore, and a saved factual-confirmation checkpoint. Schema v3 reads v2 drafts with defaults and persists original pasted text. Editing resets confirmation; invalid entry buffers block confirmation/extraction. New workflow currently ends at confirmed facts, not export. CI runs `section-content.test.mjs` and the extended `planning-smoke.cjs`. Publication was explicitly requested; confirm deployment from the release workflow.
+
 Release source `df96858c6` contains the version-2 section model and target planner. Publication of this intermediate preview was explicitly requested. Default entry is `TargetPlanner.tsx`: required jobs/industries, optional titles/JD, validated AI keyword/section plan, review and explicit acceptance, serialized local saving in `trendy-cv-planner`. Accepted plans initialize fixed empty typed sections. Content editors and downstream new-workflow export are not yet connected. Legacy wizard is retained at `?legacy`, with original storage untouched. CI runs `target-plan.test.mjs` and `planning-smoke.cjs` alongside the legacy browser test. Deployment success must be confirmed from the release workflow.
 
 Owned source: `radianceskills-dev/trendy-cv`, derived from Reactive Resume at `1fc835e5f` with original history and MIT license retained.
