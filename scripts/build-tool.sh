@@ -15,6 +15,8 @@ case "$TOOL" in
     npx --yes pnpm@12.6.0 install --filter trendy-cv... --frozen-lockfile
     npx --yes pnpm@12.6.0 --filter trendy-cv build
     CHROME_BIN="$(command -v google-chrome || command -v chromium || command -v chromium-browser)" node apps/trendy-cv/smoke.cjs
+    node --test apps/trendy-cv/target-plan.test.mjs
+    CHROME_BIN="$(command -v google-chrome || command -v chromium || command -v chromium-browser)" node apps/trendy-cv/planning-smoke.cjs
     cp -r apps/trendy-cv/dist/. "$OUT/"
     ;;
   it-tools)

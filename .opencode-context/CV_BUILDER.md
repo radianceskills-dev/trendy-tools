@@ -1,11 +1,17 @@
 # CV Builder
 
+Release source `df96858c6` contains the version-2 section model and target planner. Publication of this intermediate preview was explicitly requested. Default entry is `TargetPlanner.tsx`: required jobs/industries, optional titles/JD, validated AI keyword/section plan, review and explicit acceptance, serialized local saving in `trendy-cv-planner`. Accepted plans initialize fixed empty typed sections. Content editors and downstream new-workflow export are not yet connected. Legacy wizard is retained at `?legacy`, with original storage untouched. CI runs `target-plan.test.mjs` and `planning-smoke.cjs` alongside the legacy browser test. Deployment success must be confirmed from the release workflow.
+
 Owned source: `radianceskills-dev/trendy-cv`, derived from Reactive Resume at `1fc835e5f` with original history and MIT license retained.
 
 Static app: `apps/trendy-cv`. Uses the existing schema, import, and browser PDF packages; no auth, server, or database service is needed by this entry point. Build with Node 24 / pnpm 12.6.0, filtered install, then `pnpm --filter trendy-cv build`.
 
 Route: `/tools/cv-builder/`. Added as an independent matrix job; existing assembly and browser-test gates remain. App smoke test runs before artifact upload.
 
-Features: structured editor, 15 design choices, simple/sidebar/two-page starting layouts, six palettes, standard PDF fonts, A4/Letter, manual section-to-page assignment, IndexedDB draft, full JSON backup, JSON Resume import, and reviewed selected-text AI rewrites through shared settings.
+Current wizard: target analysis, form/plain-text CV extraction, separate reviewed YAML professional suggestions, skill grouping, presentation and export. Original editor remains in source as `LegacyEditor`; its 15-design gallery and JSON import/backup controls are not exposed by the wizard. Contact fields are excluded from form-based professional review; pasted-text extraction explicitly sends the supplied text.
 
-Limits: manual preview refresh, no automatic overflow guarantees, no JSON Resume export yet, no photo/custom-section UI, no whole-CV AI review. Do not advertise those as implemented. AI must not invent facts or transmit unselected contact/section data.
+Local implementation on source branch `feat/cv-pdf-template-builder` (not yet published): replaces custom HTML preview with PDF.js rendering of the same browser-generated PDF blob used for download. Initial native templates: Onyx, Azurill, Bronzor; six palettes, A4/Letter. Pages flow through the renderer rather than forced two-page assignment. Template creation works without AI; skill grouping is optional.
+
+`resume-adapter.mjs` maps curated text and optional manually structured experience/education into Reactive Resume data. Original text is preserved. Structured overrides carry a source snapshot; changed source invalidates overrides until explicitly checked. Wizard drafts persist these entries plus template/paper. Legacy drafts without structured entries remain supported.
+
+Local checks cover three templates with long multi-page content, preserved final achievement, same-blob download bytes, mobile width, structured draft restore, and empty sections. Visual page-break review and required non-Latin font validation remain outstanding. Automatic conversion to structured entries and Typst comparison are not implemented. AI must not invent facts. Full-site CI/Netlify validation remains required before publishing this branch.
