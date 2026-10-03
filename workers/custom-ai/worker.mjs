@@ -6,15 +6,16 @@ export default {
     const reply = (message, status) => new Response(JSON.stringify({ error: { message } }), { status, headers: { ...headers, "Content-Type": "application/json" } });
     if (request.headers.get("Origin") !== ORIGIN) return new Response("Origin not allowed", { status: 403 });
     const url = new URL(request.url);
-    if (url.pathname !== "/v1/chat/completions" || url.search) return reply("Unknown route", 404);
-    if (request.method === "OPTIONS") return new Response(null, { status: 204, headers: { ...headers, "Access-Control-Allow-Methods": "POST, OPTIONS", "Access-Control-Allow-Headers": "Authorization, Content-Type", "Access-Control-Max-Age": "86400" } });
-    if (request.method !== "POST") return reply("POST required", 405);
+    const models = url.pathname === "/v1/models";
+    if ((!models && url.pathname !== "/v1/chat/completions") || url.search) return reply("Unknown route", 404);
+    if (request.method === "OPTIONS") return new Response(null, { status: 204, headers: { ...headers, "Access-Control-Allow-Methods": "GET, POST, OPTIONS", "Access-Control-Allow-Headers": "Authorization, Content-Type", "Access-Control-Max-Age": "86400" } });
+    if (request.method !== (models ? "GET" : "POST")) return reply("Method not allowed", 405);
     const authorization = request.headers.get("Authorization") || "";
     if (!/^Bearer\s+\S+$/i.test(authorization)) return reply("Supply your provider API key", 401);
-    if (!request.headers.get("Content-Type")?.includes("application/json")) return reply("JSON required", 415);
+    if (!models && !request.headers.get("Content-Type")?.includes("application/json")) return reply("JSON required", 415);
     if (Number(request.headers.get("Content-Length")) > 1048576) return reply("Request too large", 413);
     let body;
-    try {
+    if (!models) try {
       const reader = request.body?.getReader();
       if (!reader) return reply("JSON body required", 400);
       const chunks = []; let size = 0;
@@ -25,7 +26,7 @@ export default {
       if (!data || typeof data.model !== "string" || !Array.isArray(data.messages)) return reply("model and messages required", 400);
     } catch { return reply("Invalid JSON body", 400); }
     try {
-      const upstream = await fetch(UPSTREAM, { method: "POST", headers: { "Authorization": authorization, "Content-Type": "application/json", "Accept": "text/event-stream, application/json" }, body, redirect: "manual", signal: request.signal });
+      const upstream = await fetch(models ? UPSTREAM.replace("/chat/completions", "/models") : UPSTREAM, { method: models ? "GET" : "POST", headers: { "Authorization": authorization, "Content-Type": "application/json", "Accept": "text/event-stream, application/json" }, body, redirect: "manual", signal: request.signal });
       if (upstream.status >= 300 && upstream.status < 400) { await upstream.body?.cancel(); return reply("Upstream redirect refused", 502); }
       const responseHeaders = new Headers(headers);
       responseHeaders.set("Content-Type", upstream.headers.get("Content-Type") || "application/json");

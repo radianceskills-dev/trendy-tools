@@ -609,7 +609,11 @@
     };
 
      function endpointFor(url) {
-       const value = url.trim().replace(/\/+$/, '');
+       let value = url.trim().replace(/\/+$/, '');
+       const alibabaBase = 'https://token-plan.ap-southeast-1.maas.aliyuncs.com/compatible-mode/v1';
+       if (value === alibabaBase || value === `${alibabaBase}/chat/completions`) {
+         value = 'https://trendy-custom-ai.trendy-tools-ai.workers.dev/v1';
+       }
        return value.endsWith('/chat/completions') ? value : `${value}/chat/completions`;
      }
 
@@ -654,7 +658,12 @@
      function readAISettings() {
        try {
          const value = JSON.parse(localStorage.getItem(AI_STORAGE_KEY));
-         if (value?.transport === 'puter' && value.provider === 'puter') return value;
+          if (value?.transport === 'puter' && value.provider === 'puter') return value;
+          if (value?.provider === 'custom' && typeof value.endpoint === 'string' && value.endpoint === 'https://token-plan.ap-southeast-1.maas.aliyuncs.com/compatible-mode/v1/chat/completions') {
+            value.endpoint = endpointFor(value.endpoint);
+            value.baseUrl = baseUrlFor(value.endpoint);
+            localStorage.setItem(AI_STORAGE_KEY, JSON.stringify(value));
+          }
          if (value?.provider === 'opencode' && typeof value.apiKey === 'string') {
            return { ...value, transport: 'openai', provider: 'custom', providerLabel: 'Custom provider', baseUrl: 'https://opencode.ai/zen/v1', endpoint: 'https://opencode.ai/zen/v1/chat/completions' };
          }

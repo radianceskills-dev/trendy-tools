@@ -2,6 +2,14 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import worker, { ORIGIN, UPSTREAM } from './worker.mjs';
 const url = 'https://proxy.example/v1/chat/completions';
+test('models GET forwards only to fixed models endpoint and preserves provider errors', async (t) => {
+ t.mock.method(globalThis,'fetch',async (destination,options)=>{
+  assert.equal(destination,UPSTREAM.replace('/chat/completions','/models')); assert.equal(options.method,'GET'); assert.equal(options.body,undefined);
+  return new Response('{"error":"invalid key"}',{status:401,headers:{'Content-Type':'application/json'}});
+ });
+ const r=await worker.fetch(new Request('https://proxy.example/v1/models',{headers:{Origin:ORIGIN,Authorization:'Bearer test'}}));
+ assert.equal(r.status,401); assert.equal(r.headers.get('Access-Control-Allow-Origin'),ORIGIN);
+});
 test('preflight permits only our origin; no auth required for OPTIONS', async () => {
  const r = await worker.fetch(new Request(url, {method:'OPTIONS',headers:{Origin:ORIGIN}}));
  assert.equal(r.status,204); assert.equal(r.headers.get('Access-Control-Allow-Origin'),ORIGIN);

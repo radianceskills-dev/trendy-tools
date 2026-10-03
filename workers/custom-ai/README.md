@@ -1,5 +1,7 @@
 # Custom Alibaba AI proxy
 
+Supports `GET /v1/models` as well as `POST /v1/chat/completions`. Dashboard endpoint normalization automatically maps the exact Alibaba base/chat URL to this proxy, and migrates saved Custom settings when the dashboard is opened. OpenRouter/Puter are unchanged. If Alibaba does not support model listing for this subscription, enter the model ID manually; upstream errors are returned with CORS headers.
+
 Endpoint: `https://trendy-custom-ai.trendy-tools-ai.workers.dev/v1/chat/completions`
 
 Select **Custom** in Trendy Tools AI settings and use this endpoint with your own Alibaba API key and model ID. The key remains browser-configured; this Worker forwards it only to the fixed Alibaba endpoint. OpenRouter and Puter remain direct and consume no Worker requests. Other custom URLs remain direct unless the user selects this proxy URL.
