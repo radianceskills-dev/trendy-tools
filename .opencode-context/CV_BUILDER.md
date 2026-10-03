@@ -1,5 +1,7 @@
 # CV Builder
 
+Release `d995d70bc` removes the CV AI 90-second timeout. Requests wait until completion, provider/network failure or user cancellation; non-abortable provider results are still discarded after cancellation. Custom endpoint HTTPS validation is unchanged.
+
 User standing instruction: validate, commit, push and deploy completed changes automatically; confirm the full workflow and live bundle before reporting success.
 
 Release source `8061c7de7` adds sparkle-marked AI triggers and a floating animated activity panel with session-local raw output. OpenAI-compatible requests use SSE streaming with JSON response fallback; Puter shows completed output. Cancellation/error status and reduced-motion styles are supported. CI includes stream parsing tests and panel browser checks. Raw output is literal text and does not bypass editor approval.
