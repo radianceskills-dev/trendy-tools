@@ -1,5 +1,7 @@
 # CV Builder
 
+Release `eefd778f7`: SSE stops on terminal markers instead of waiting for connection closure. Reasoning deltas show status only, not reasoning text. Extraction automatically opens AI output, shows elapsed time, and scrolls to staged review results. Regression tests include terminal markers on streams that remain open.
+
 Release `ab968aaa9` adds the startup chooser: create new CV, continue populated current draft, or open named saved CV. Opening the app alone does not autosave. Before new/open replaces a populated active draft, it is archived to the library; failed storage prevents switching. Saved CV opening restores photo, paper and template. Browser coverage includes new/continue/reload/open paths.
 
 Release `d995d70bc` removes the CV AI 90-second timeout. Requests wait until completion, provider/network failure or user cancellation; non-abortable provider results are still discarded after cancellation. Custom endpoint HTTPS validation is unchanged.
