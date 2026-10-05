@@ -1,5 +1,7 @@
 # CV Builder
 
+Release `a89e55e6d` removes all five templates' section-count and page-count caps, superseding earlier product limits below. Empty/unsupported section checks and actual PDF text-boundary checks remain. Templates are available for multipage visual iteration without artificial count-based exclusions.
+
 Release `eefd778f7`: SSE stops on terminal markers instead of waiting for connection closure. Reasoning deltas show status only, not reasoning text. Extraction automatically opens AI output, shows elapsed time, and scrolls to staged review results. Regression tests include terminal markers on streams that remain open.
 
 Release `ab968aaa9` adds the startup chooser: create new CV, continue populated current draft, or open named saved CV. Opening the app alone does not autosave. Before new/open replaces a populated active draft, it is archived to the library; failed storage prevents switching. Saved CV opening restores photo, paper and template. Browser coverage includes new/continue/reload/open paths.
