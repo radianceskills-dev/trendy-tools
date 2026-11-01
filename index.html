@@ -167,22 +167,6 @@
     .search input::placeholder { color: #6f7d94; }
     .search input:focus { border-color: rgba(39, 107, 137, .55); background: #fff; box-shadow: 0 0 0 4px rgba(39,107,137,.1); }
 
-    .filters { display: flex; gap: 6px; padding: 4px; border: 1px solid var(--line); border-radius: 12px; background: rgba(248, 250, 249, .82); }
-    .filter {
-      min-height: 34px;
-      padding: 6px 11px;
-      border: 0;
-      border-radius: 8px;
-      color: var(--muted);
-      background: transparent;
-      cursor: pointer;
-      font-size: 12px;
-      font-weight: 700;
-      transition: color .18s, background .18s, box-shadow .18s;
-    }
-    .filter:hover { color: var(--text); }
-    .filter.active { color: #f5fbfc; background: var(--blue-strong); box-shadow: 0 2px 8px rgba(39,107,137,.18); }
-
     .tools { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 16px; }
     .tool {
       --hue: 220;
@@ -401,7 +385,6 @@
       main { padding-top: 52px; }
       .controls { align-items: stretch; flex-direction: column; margin-top: 38px; }
       .search { max-width: none; }
-      .filters { width: max-content; max-width: 100%; overflow-x: auto; }
       .tools { grid-template-columns: repeat(2, minmax(0, 1fr)); }
     }
     @media (max-width: 500px) {
@@ -457,11 +440,6 @@
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="m20 20-4-4"/></svg>
         <input id="search" type="search" placeholder="Find a tool…" autocomplete="off">
       </label>
-      <div class="filters" role="group" aria-label="Filter by availability">
-        <button class="filter active" type="button" data-filter="all" aria-pressed="true">All</button>
-        <button class="filter" type="button" data-filter="ready" aria-pressed="false">Ready</button>
-        <button class="filter" type="button" data-filter="soon" aria-pressed="false">In validation</button>
-      </div>
     </section>
 
     <section class="tools" id="tools" aria-live="polite"></section>
@@ -1313,15 +1291,10 @@ When the user describes a task, first decide whether one or more LIVE TOOL CATAL
     const grid = document.querySelector('#tools');
     const search = document.querySelector('#search');
     const empty = document.querySelector('#empty');
-    let filter = 'all';
 
     function render() {
       const query = search.value.trim().toLowerCase();
-      const visible = tools.filter(tool => {
-        const statusMatch = filter === 'all' || (filter === 'ready' ? tool.ready : !tool.ready);
-        const textMatch = `${tool.name} ${tool.category} ${tool.description}`.toLowerCase().includes(query);
-        return statusMatch && textMatch;
-      });
+      const visible = tools.filter(tool => `${tool.name} ${tool.category} ${tool.description}`.toLowerCase().includes(query));
 
        grid.innerHTML = visible.map((tool, index) => `${tool.ready ? `<a class="tool ${tool.ai ? 'ai-featured' : ''}" href="/tools/${tool.id}/" style="--hue:${tool.hue};--i:${index}" aria-label="Open ${tool.name}">` : `<article class="tool disabled" style="--hue:${tool.hue};--i:${index}">`}
            <div class="tool-top">
@@ -1341,17 +1314,6 @@ When the user describes a task, first decide whether one or more LIVE TOOL CATAL
     }
 
     search.addEventListener('input', render);
-    document.querySelectorAll('.filter').forEach(button => {
-      button.addEventListener('click', () => {
-        filter = button.dataset.filter;
-        document.querySelectorAll('.filter').forEach(item => {
-          const active = item === button;
-          item.classList.toggle('active', active);
-          item.setAttribute('aria-pressed', String(active));
-        });
-        render();
-      });
-    });
 
     render();
     setupAISettings();

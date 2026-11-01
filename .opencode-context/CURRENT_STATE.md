@@ -39,7 +39,7 @@ Current dashboard behavior:
 - Ready tools use full-card links; there is no separate Open button.
 - BentoPDF and D2 Playground are visually featured and marked `AI powered`.
 - Card-level Ready/Soon pills and header ready-count/version-lock pills were intentionally removed.
-- Search and availability filters remain.
+- Search filter remains; availability filter buttons (`All`, `Ready`, `In validation`) were removed since all 14 tools are live.
 - AI setup uses three tabs: OpenRouter, Puter, and Custom.
 - `ai-capabilities.json` is the single hand-maintained catalog for the 14 live tools. Ask AI loads it and uses it for local relevance selection and direct tool links.
 - Ask AI's system prompt explicitly requires live-tool selection, capability-grounded answers, direct links, and a clear no-fit response. The compact catalog includes key capability phrases and local ranking expands common task synonyms.
