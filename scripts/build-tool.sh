@@ -9,16 +9,6 @@ OUT="$ROOT/tools/$TOOL"
 mkdir -p "$CACHE" "$OUT"
 
 case "$TOOL" in
-  cv-builder)
-    git clone --depth 1 --branch main https://github.com/radianceskills-dev/trendy-cv.git "$CACHE/cv-builder"
-    cd "$CACHE/cv-builder"
-    npx --yes pnpm@12.6.0 install --filter trendy-cv... --frozen-lockfile
-    npx --yes pnpm@12.6.0 --filter trendy-cv build
-    CHROME_BIN="$(command -v google-chrome || command -v chromium || command -v chromium-browser)" node apps/trendy-cv/smoke.cjs
-    node --test apps/trendy-cv/target-plan.test.mjs apps/trendy-cv/section-content.test.mjs apps/trendy-cv/optimization.test.mjs apps/trendy-cv/template-catalog.test.mjs apps/trendy-cv/ai-stream.test.mjs
-    CHROME_BIN="$(command -v google-chrome || command -v chromium || command -v chromium-browser)" node apps/trendy-cv/planning-smoke.cjs
-    cp -r apps/trendy-cv/dist/. "$OUT/"
-    ;;
   it-tools)
     git clone --depth 1 --branch main https://github.com/radianceskills-dev/trendy-it-tools.git "$CACHE/it-tools"
     cd "$CACHE/it-tools"
