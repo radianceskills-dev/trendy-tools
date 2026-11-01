@@ -16,7 +16,6 @@ A tool is marked **Live** only when all of the following are true:
 - **Tool-specific build adapters:** no generic `npm run build` assumption
 - **Version locking:** tag or full commit SHA only; never `main`/`master`
 - **Deployment gate:** an incomplete build must fail the deployment rather than publish a partial catalog
-- **Customer-facing wrappers:** DuckDB-Wasm and WebLLM are libraries, so Trendy Tools will provide a small first-party browser UI pinned to the chosen library version.
 
 ## Work batches
 
@@ -37,10 +36,6 @@ A tool is marked **Live** only when all of the following are true:
 12. D2 Playground
 13. OpenQR
 14. KeeWeb
-
-### Batch 3 — First-party browser interfaces over libraries
-15. DuckDB-Wasm SQL workspace
-16. WebLLM local-chat workspace
 
 ## Current rule
 No card is labelled Live until it passes the above acceptance checks. This replaces the earlier partial-build approach, which could publish 404s or broken assets.

@@ -93,11 +93,6 @@ This complete-batch gate prevents a successful partial build from publishing a d
 | OpenQR | Git tag | pnpm 10.16.1, custom Next config, `adapt-openqr.mjs` | `tools/openqr/` |
 | KeeWeb | Trendy Tools-owned release ZIP | Release extraction only | `tools/keeweb/` |
 
-Planned but unimplemented modules:
-
-- DuckDB-Wasm: requires a first-party SQL workspace rather than exposing only a library package.
-- WebLLM: requires a first-party local-chat workspace rather than exposing only a library package.
-
 ## Shared Dependencies
 
 The build environment uses:

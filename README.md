@@ -1,12 +1,12 @@
 # Trendy Tools
 
-A self-hosted collection of 16 browser-only tools maintained as Trendy Tools editions. All processing happens client-side -- no server, no uploads, no tracking.
+A self-hosted collection of 14 browser-only tools maintained as Trendy Tools editions. All processing happens client-side -- no server, no uploads, no tracking.
 
 Live at: [trendytools.netlify.app](https://trendytools.netlify.app)
 
 ## How It Works
 
-1. **Dashboard** (`index.html`) -- a static hub page linking to all 16 tools
+1. **Dashboard** (`index.html`) -- a static hub page linking to all 14 tools
 2. **tools-manifest.json** -- points to source repositories controlled by `radianceskills-dev`
 3. **GitHub Actions** -- clones, builds, and deploys all tools to Netlify on push
 4. **Maintained editions** -- each tool can evolve independently while retaining its applicable open-source license and notices
@@ -25,12 +25,10 @@ Live at: [trendytools.netlify.app](https://trendytools.netlify.app)
 | 8 | Excalidraw | Whiteboarding / Diagrams | v0.18.1 | MIT |
 | 9 | D2 Playground | Diagram-as-Code | commit-pinned | BSD-2-Clause |
 | 10 | JupyterLite | Coding / Python | v0.8.2 | BSD-3-Clause |
-| 11 | DuckDB-Wasm | Data Analysis / SQL | v1.33.0 | MIT |
-| 12 | OpenQR | QR Utilities | v1.0.0 | AGPL-3.0 |
-| 13 | Decimen | QR File Transfer | commit-pinned | MIT |
-| 14 | KeeWeb | Password Vault | v1.18.7 | MIT |
-| 15 | WebLLM | Local AI | v0.2.83 | Apache-2.0 |
-| 16 | Bolo | Screen Recording | commit-pinned | MIT |
+| 11 | OpenQR | QR Utilities | v1.0.0 | AGPL-3.0 |
+| 12 | Decimen | QR File Transfer | commit-pinned | MIT |
+| 13 | KeeWeb | Password Vault | v1.18.7 | MIT |
+| 14 | Bolo | Screen Recording | commit-pinned | MIT |
 
 ## Deployment
 

@@ -6,7 +6,7 @@ Trendy Tools is a static, browser-first collection of independently maintained T
 
 The deployment repository does not contain generated tool bundles. GitHub Actions clones source repositories owned by `radianceskills-dev` or downloads owned release artifacts, adapts them for subpath hosting, builds them, validates the complete assembled site, browser-tests the BentoPDF AI workflow, and deploys the repository root to Netlify.
 
-All 16 manifest tools have public `radianceskills-dev/trendy-<tool>` source repositories. CyberChef, KeeWeb, and JupyterLite build artifacts consumed directly by production are stored as releases on their corresponding owned repositories. Applicable original licenses, notices, copyright statements, and source history remain part of each maintained repository.
+All 14 manifest tools have public `radianceskills-dev/trendy-<tool>` source repositories. CyberChef, KeeWeb, and JupyterLite build artifacts consumed directly by production are stored as releases on their corresponding owned repositories. Applicable original licenses, notices, copyright statements, and source history remain part of each maintained repository.
 
 The latest verified production deployment at the time this file was written is GitHub Actions run `35731448856` for commit `58a6252`; it completed successfully.
 
@@ -28,8 +28,6 @@ The CI matrix currently produces 14 routes under `tools/`:
 - `excalidraw`
 - `openqr`
 - `keeweb`
-
-The dashboard still represents a 16-tool product vision. `duckdb-wasm` and `web-llm` are listed but are not built by the workflow. They require first-party browser interfaces over library packages before they can become live routes.
 
 ## Dashboard
 
@@ -84,7 +82,6 @@ D2 Playground is a maintained Trendy Tools source repository containing the AI p
 
 ## Known Issues And Incomplete Work
 
-- DuckDB-Wasm and WebLLM have manifest/dashboard entries but no production build modules or first-party UIs.
 - Changes made directly in an owned tool repository do not automatically trigger this deployment repository. Run `build-and-deploy.yml` manually, or add an explicit cross-repository dispatch workflow when automatic tool-source deployments are needed.
 - The central build no longer runs the BentoPDF or D2 production adapters. Those files remain migration references; production AI source is committed in the owned repositories.
 - CyberChef AI recipe builder is committed in `radianceskills-dev/trendy-cyberchef` at `dd79de5c`. The production build now compiles that owned source rather than downloading the preserved baseline ZIP.
@@ -96,8 +93,6 @@ D2 Playground is a maintained Trendy Tools source repository containing the AI p
 
 ## Likely Next Steps
 
-- Implement and validate the DuckDB-Wasm SQL workspace.
-- Implement and validate the WebLLM local-chat workspace.
 - Add focused dashboard browser tests, especially for tab visibility, OpenRouter callback state, and Puter model selection.
 - Add focused dashboard chat browser tests for IndexedDB persistence, context trimming, Markdown safety, streaming, and close behavior.
 - Keep the live capability catalog current when a tool's user-facing capabilities or route changes.

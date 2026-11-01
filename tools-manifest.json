@@ -132,18 +132,6 @@
       "implementationState": "direct-static-validation"
     },
     {
-      "id": "duckdb-wasm",
-      "name": "DuckDB-Wasm",
-      "category": "Data Analysis / SQL",
-      "description": "Analyze CSV, JSON, and Parquet locally using SQL. No database installation needed.",
-      "repo": "https://github.com/radianceskills-dev/trendy-duckdb-wasm",
-      "ref": "main",
-      "refType": "branch",
-      "license": "MIT",
-      "build": "npm install && PUBLIC_URL=/tools/duckdb-wasm/ npm run build",
-      "outputDir": "packages/duckdb-wasm-app"
-    },
-    {
       "id": "openqr",
       "name": "OpenQR",
       "category": "QR Utilities",
@@ -182,18 +170,6 @@
       "outputDir": ".",
       "implementationState": "official-web-release-validation",
       "note": "Official May 8, 2026 pre-release web artifact; selected instead of the July 18, 2021 v1.18.7 stable artifact."
-    },
-    {
-      "id": "web-llm",
-      "name": "WebLLM",
-      "category": "Local AI",
-      "description": "Run open LLMs directly in the browser via WebGPU. Private local inference.",
-      "repo": "https://github.com/radianceskills-dev/trendy-web-llm",
-      "ref": "main",
-      "refType": "branch",
-      "license": "Apache-2.0",
-      "build": "npm install && sed -i 's/vite build/vite build --base=\\/tools\\/web-llm\\//g' package.json && npm run build",
-      "outputDir": "dist"
     },
     {
       "id": "bolo",

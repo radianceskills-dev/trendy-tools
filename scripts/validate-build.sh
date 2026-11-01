@@ -1,12 +1,12 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-if grep -REq 'github\.com/(alam00000|CorentinTh|gchq|GoogleChromeLabs|viliusle|walterlow|omni-media|excalidraw|d2lang|jupyterlite|duckdb|open-qr|aryanjsx|keeweb|mlc-ai|NakliTechie)/' scripts .github tools-manifest.json; then
+if grep -REq 'github\.com/(alam00000|CorentinTh|gchq|GoogleChromeLabs|viliusle|walterlow|omni-media|excalidraw|d2lang|jupyterlite|open-qr|aryanjsx|keeweb|NakliTechie)/' scripts .github tools-manifest.json; then
   echo "Deployment configuration must use Trendy Tools-owned top-level sources and artifacts." >&2
   exit 1
 fi
 
-for source_repo in bentopdf it-tools cyberchef squoosh minipaint freecut omniclip excalidraw d2-playground jupyterlite duckdb-wasm openqr decimen keeweb web-llm bolo; do
+for source_repo in bentopdf it-tools cyberchef squoosh minipaint freecut omniclip excalidraw d2-playground jupyterlite openqr decimen keeweb bolo; do
   grep -q "https://github.com/radianceskills-dev/trendy-$source_repo" tools-manifest.json
 done
 
