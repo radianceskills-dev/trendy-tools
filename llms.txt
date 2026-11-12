@@ -1,0 +1,27 @@
+# Trendy Tools — Private Browser Utilities
+
+> Trendy Tools (`tools.rdskills-lab.com`) is a curated suite of 14 pinned, client-side browser utilities built and maintained by [Radiance Skills Lab](https://rdskills-lab.com/). Files are processed locally in your browser via WebAssembly, WebCodecs, Canvas, and IndexedDB — never uploaded to a server.
+
+## 14 Included Browser Workspaces
+
+1. **[BentoPDF](https://tools.rdskills-lab.com/tools/bentopdf/)** (`v2.8.8` · AI-enabled): Merge, split, OCR, sanitize, redact, watermark, compress, encrypt, and sign PDFs locally. Includes a natural-language AI workflow builder.
+2. **[IT-Tools](https://tools.rdskills-lab.com/tools/it-tools/)** (`v2024.10.22`): Everyday developer utilities — JSON formatting, Base64/URL encoding, UUID generation, hashing, JWT inspection, regex testing, and timestamp conversion.
+3. **[CyberChef](https://tools.rdskills-lab.com/tools/cyberchef/)** (`v11.3.0` · AI-enabled): The Cyber Swiss Army Knife for local data transformation, encoding, encryption, compression, and binary inspection, enhanced with AI recipe generation.
+4. **[Squoosh](https://tools.rdskills-lab.com/tools/squoosh/)** (`e8d35e0`): Fast client-side image compression and format conversion (WebP, AVIF, MozJPEG, OxiPNG).
+5. **[miniPaint](https://tools.rdskills-lab.com/tools/minipaint/)** (`v4.14.3`): Browser-based multi-layer image editor with filters, selections, transparency, and effects.
+6. **[FreeCut](https://tools.rdskills-lab.com/tools/freecut/)** (`4d62e808`): Multi-track timeline video editor running locally in your browser.
+7. **[Omniclip](https://tools.rdskills-lab.com/tools/omniclip/)** (`v1.1.3`): Fast local-first video editing workspace powered by WebCodecs and FFmpeg workers.
+8. **[Excalidraw](https://tools.rdskills-lab.com/tools/excalidraw/)** (`v0.18.1`): Hand-drawn style whiteboard for sketching architecture diagrams and wireframes locally.
+9. **[D2 Playground](https://tools.rdskills-lab.com/tools/d2-playground/)** (`2a6cf2d` · AI-enabled): Declarative text-to-diagram scripting workspace with AI diagram generation.
+10. **[JupyterLite](https://tools.rdskills-lab.com/tools/jupyterlite/)** (`v0.8.2`): Full JupyterLab environment running Python and notebooks entirely in the browser via Pyodide/WebAssembly.
+11. **[OpenQR](https://tools.rdskills-lab.com/tools/openqr/)** (`v1.0.0`): Privacy-first QR code generator for URLs, Wi-Fi credentials, vCards, and styled vector QR codes.
+12. **[Decimen](https://tools.rdskills-lab.com/tools/decimen/)** (`commit-pinned`): Air-gapped optical file transfer between devices using fountain-coded animated QR codes and your camera.
+13. **[KeeWeb](https://tools.rdskills-lab.com/tools/keeweb/)** (`v1.18.9 pre`): Local KeePass (`.kdbx`) password vault manager running in the browser.
+14. **[Bolo](https://tools.rdskills-lab.com/tools/bolo/)** (`commit-pinned`): Browser-native screen, webcam, and microphone recorder with local on-device Whisper speech transcription.
+
+## Optional Browser-Local AI Setup
+
+- **Supported AI Providers:** OpenRouter OAuth (`openrouter/free`), Puter, or any custom HTTPS OpenAI-compatible API key.
+- **Privacy Guarantee:** AI credentials are stored only in your browser's `localStorage`. Local files (PDFs, images, videos, vaults) are processed inside your browser; AI is used only when you explicitly invoke Ask AI or an AI workflow planner (BentoPDF, CyberChef, D2 Playground).
+- **Machine-Readable Capabilities:** https://tools.rdskills-lab.com/ai-capabilities.json
+- **Pricing:** https://tools.rdskills-lab.com/pricing.md ($0 / 100% Free)

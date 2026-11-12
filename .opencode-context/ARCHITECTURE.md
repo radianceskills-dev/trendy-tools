@@ -1,3 +1,12 @@
+# Reconciled production baseline — November 12, 2026
+
+The canonical URL is https://tools.rdskills-lab.com (Netlify project trendytools).
+The live Arctic Graphite dashboard and SEO pages were imported byte-for-byte from deployment 6af1579df58346f10bb365e3. Git is now the source for index.html, arctic-dashboard.css, favicon/social assets, sitemap/robots, and ai-flowchart/, ai-flowchart-examples/, offline-tools/.
+Earlier descriptions below of a light dashboard or inline-only CSS are historical.
+
+Production workflow watches root web assets and SEO directories, validates them with scripts/validate-site.py, and assembles a website-only dist-site via scripts/assemble-site.py. Do not deploy the repository root or manually replace production dashboard assets outside Git. Netlify builds must only be published by the GitHub Actions complete-batch workflow, not the placeholder native Git build.
+BentoPDF and D2 adapter/integration changes now invalidate the relevant cache. Workflow-only changes can reuse existing tools; build-script changes still invalidate all tools. Manual dispatch still rebuilds all tools. External tool repository commits alone do not trigger this repository; dispatch or a relevant coordinator change is required.
+
 # Architecture
 
 ## System Shape
