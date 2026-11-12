@@ -4,7 +4,17 @@ on:
   push:
     branches: [main]
     paths:
-      - 'index.html'
+      - '*.html'
+      - '*.css'
+      - '*.js'
+      - '*.json'
+      - '*.svg'
+      - '*.png'
+      - '*.txt'
+      - 'pricing.md'
+      - 'ai-flowchart/**'
+      - 'ai-flowchart-examples/**'
+      - 'offline-tools/**'
       - 'ai-capabilities.json'
       - 'tools-manifest.json'
       - '.github/workflows/build-and-deploy.yml'
@@ -12,6 +22,10 @@ on:
       - 'integrations/**'
       - 'scripts/**'
   workflow_dispatch:
+
+concurrency:
+  group: trendy-tools-production
+  cancel-in-progress: false
 
 env:
   NODE_VERSION: '24'
@@ -159,6 +173,9 @@ jobs:
             fi
           done
 
+      - name: Validate dashboard and SEO assets
+        run: python3 scripts/validate-site.py
+
       - name: Validate deployment artifacts
         run: bash scripts/validate-build.sh
 
@@ -179,10 +196,13 @@ jobs:
           test -n "$CHROME_BIN"
           node .build-cache/browser-tests/cyberchef-browser-test.cjs "$PWD/tools/cyberchef" "$CHROME_BIN"
 
+      - name: Assemble website-only publish directory
+        run: python3 scripts/assemble-site.py
+
       - name: Deploy only a complete validated batch
         uses: nwtgck/actions-netlify@v3
         with:
-          publish-dir: '.'
+          publish-dir: 'dist-site'
           production-deploy: true
           deploy-message: 'Validated direct static tools: ${{ github.sha }}'
         env:

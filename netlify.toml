@@ -3,6 +3,8 @@
 # Build tools via GitHub Actions, then deploy.
 
 [build]
+  # GitHub Actions publishes complete artifacts; skip native Git builds.
+  ignore = "exit 0"
   publish = "."
   command = "echo 'Static site -- no Netlify build needed.'"
 

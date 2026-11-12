@@ -7,11 +7,13 @@ CURRENT_SHA="${3:?current sha is required}"
 
 changed="$(git diff --name-only "$BEFORE_SHA" "$CURRENT_SHA")"
 
-if grep -Eq '^\.github/workflows/build-and-deploy\.yml$|^scripts/build-tool\.sh$|^scripts/should-build-tool\.sh$' <<< "$changed"; then
+if grep -Eq '^scripts/build-tool\.sh$|^scripts/should-build-tool\.sh$' <<< "$changed"; then
   exit 0
 fi
 
 case "$TOOL" in
+  bentopdf) grep -Eq '^integrations/bentopdf-|^scripts/adapt-bentopdf-' <<< "$changed" && exit 0 || true ;;
+  d2-playground) grep -Eq '^integrations/d2-ai/|^scripts/adapt-d2-ai\.mjs$' <<< "$changed" && exit 0 || true ;;
   cyberchef) grep -Eq '^tools-manifest\.json$|^scripts/build-tool\.sh$' <<< "$changed" && exit 0 || true ;;
   freecut) grep -Eq '^tools-manifest\.json$|^scripts/adapt-freecut\.mjs$' <<< "$changed" && exit 0 || true ;;
   omniclip) grep -Eq '^scripts/adapt-omniclip\.mjs$' <<< "$changed" && exit 0 || true ;;
